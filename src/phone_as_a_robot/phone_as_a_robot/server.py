@@ -33,25 +33,21 @@ class Server(Node):
         self.port_param = self.declare_parameter("port", 2000)
         self.debug_param = self.declare_parameter("debug", True)
 
-        self.publisher_ = self.create_publisher(String, "topic", 10)
-        timer_period = 0.5  # seconds
-        self.timer = self.create_timer(timer_period, self.timer_callback)
-        self.i = 0
+        self.message_publisher = self.create_publisher(String, "message", 10)
 
-    def timer_callback(self):
+    def publish_message(self, message):
         msg = String()
-        msg.data = "Hello World: %d" % self.i
-        self.publisher_.publish(msg)
+        msg.data = message
+        self.message_publisher.publish(msg)
         self.get_logger().info('Publishing: "%s"' % msg.data)
-        self.i += 1
 
 
 def main(args=None):
     rclpy.init(args=args)
     node = Server()
-    rclpy.spin_once(node)
     thread = StoppableThread(target=rclpy.spin, args=(node,), name="server_node")
 
+    # Get templates folder from install/ path
     templates_directory = os.path.join(
         os.environ["COLCON_PREFIX_PATH"], "phone_as_a_robot", "lib", "templates"
     )
@@ -66,9 +62,10 @@ def main(args=None):
             async_mode=socketio.async_mode,
         )
 
-    @socketio.on("my event", namespace="/test")
-    def handle_my_custom_namespace_event(json):
-        print("received json: " + str(json))
+    @socketio.on("log")
+    def handle_log_event(message):
+        print("received : " + message)
+        node.publish_message(message)
 
     try:
         thread.start()

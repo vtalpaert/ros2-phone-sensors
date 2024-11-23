@@ -10,13 +10,19 @@
                 $('#log').append('<br>' + $('<div/>').text(text).html());
             };
 
+            $( "#trigger" ).on( "submit", function( event ) {
+                socket.emit('log', 'Trigger');
+                logMessage('Trigger pushed');
+                event.preventDefault();
+            });
+
             // Connect to the Socket.IO server.
             // The connection URL has the following format, relative to the current page:
             //     http[s]://<domain>:<port>[/<namespace>]
             var socket = io();
 
             socket.on('connect', function() {
-                socket.emit('my event', {data: 'I\'m connected!'});
+                socket.emit('log', 'I\'m connected!');
                 logMessage("Connected to server")
             });
 
@@ -25,6 +31,10 @@
 </head>
 <body>
     <h1>ROS2 Phone As A Robot</h1>
+
+    <form id="trigger" method="POST" action="#">
+        <input type="submit" value="Trigger">
+    </form>
 
     <h2>Receive:</h2>
     <div id="log"></div>
