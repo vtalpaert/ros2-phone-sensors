@@ -2,6 +2,8 @@
 
 While many projects exist to control your robot from your phone, this project is the other way around; your phone is the robot' sensors ! It will send the camera feed, IMU and GPS so that you may integrate the phone onto a mobile base.
 
+The particularity of this project is that it relies on the mobile browser instead of a specific app. A webpage is served from the ROS2 node, opening the page from a mobile client will ask for permissions in the browser. The data is transmitted between the server and client using websockets for a modern and fast communication, as opposed to making HTTP requests or streaming UDP.
+
 This repository is inspired by a project I did with students as a TA called [phone-imu](https://github.com/vtalpaert/phone-imu).
 
 ## Build
@@ -15,10 +17,21 @@ colcon build --packages-up-to phone_sensors
 
 ## Usage
 
+### Quickstart
+
 ```bash
 source install/setup.bash
 ros2 run phone_sensors server
 ```
+
+### Parameters
+
+| Name | Type | Unit | Description |
+|------|------|------|-------------|
+| `host` | string | IP | Use `0.0.0.0` to accept connections outside of locahost |
+| `port` | int | | The port where the server listens on |
+| `debug` | bool | | Use Flask in debug mode |
+| `time_reference_interval` | int | ms | Rate to emit TimeReference data on the client side |
 
 ## TODO
 
