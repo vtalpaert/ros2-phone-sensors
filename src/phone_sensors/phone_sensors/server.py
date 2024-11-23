@@ -28,7 +28,7 @@ class StoppableThread(threading.Thread):
 class ServerNode(Node):
 
     def __init__(self):
-        super().__init__("server_node")
+        super().__init__("phone_sensors")
 
         self.host_param = self.declare_parameter("host", "0.0.0.0")
         self.port_param = self.declare_parameter("port", 2000)
@@ -84,7 +84,10 @@ class ServerApp:
         @self.socketio.on("connect")
         def handle_connect_event():
             # Configure client based on ROS parameters
-            emit("time_reference_set_interval", self.node.time_reference_interval_param.value)
+            emit(
+                "time_reference_set_interval",
+                self.node.time_reference_interval_param.value,
+            )
 
         @self.socketio.on("log")
         def handle_log_event(message):
@@ -106,7 +109,9 @@ class ServerApp:
 def main(args=None):
     rclpy.init(args=args)
     node = ServerNode()
-    thread = StoppableThread(target=rclpy.spin, args=(node,), name="server_node")
+    thread = StoppableThread(
+        target=rclpy.spin, args=(node,), name="phone_sensors_node_thread"
+    )
     app = ServerApp(node)
     try:
         thread.start()

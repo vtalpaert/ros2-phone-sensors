@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = "phone_as_a_robot"
+package_name = "phone_sensors"
 
 setup(
     name=package_name,
@@ -22,6 +22,6 @@ setup(
     license="Apache-2.0",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["server = phone_as_a_robot.server:main"],
+        "console_scripts": ["server = phone_sensors.server:main"],
     },
 )
