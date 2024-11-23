@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>mobile_webpage</name>
+  <name>phone_as_a_robot</name>
   <version>0.0.0</version>
-  <description>Serve a webpage to open from a mobile device. The phone's browser will send data back to the node</description>
+  <description>Serve a webpage to open from a mobile device. The phone's browser will send video, imu and gps data back to the node</description>
   <maintainer email="victor.talpaert@gmail.com">victor</maintainer>
   <license>Apache-2.0</license>
 

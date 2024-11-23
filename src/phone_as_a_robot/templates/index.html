@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>ROS2 Phone As A Robot</title>
+    <script src="//code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function() {
+            function logMessage(text) {
+                $('#log').append('<br>' + $('<div/>').text(text).html());
+            };
+
+            // Connect to the Socket.IO server.
+            // The connection URL has the following format, relative to the current page:
+            //     http[s]://<domain>:<port>[/<namespace>]
+            var socket = io();
+
+            socket.on('connect', function() {
+                socket.emit('my event', {data: 'I\'m connected!'});
+                logMessage("Connected to server")
+            });
+
+        });
+    </script>
+</head>
+<body>
+    <h1>ROS2 Phone As A Robot</h1>
+
+    <h2>Receive:</h2>
+    <div id="log"></div>
+
+</body>
+</html>

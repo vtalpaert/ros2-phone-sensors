@@ -1,6 +1,8 @@
+import os
+from glob import glob
 from setuptools import find_packages, setup
 
-package_name = 'mobile_webpage'
+package_name = 'phone_as_a_robot'
 
 setup(
     name=package_name,
@@ -10,6 +12,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        (os.path.join('lib', 'templates'), glob('templates/*')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -20,7 +23,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'server = mobile_webpage.server:main'
+            'server = phone_as_a_robot.server:main'
         ],
     },
 )
