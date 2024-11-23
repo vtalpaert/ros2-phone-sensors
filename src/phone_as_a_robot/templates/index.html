@@ -2,34 +2,37 @@
 <html>
 <head>
     <title>ROS2 Phone As A Robot</title>
-    <script src="//code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha384-5AkRS45j4ukf+JbWAfHL8P4onPA9p0KwwP7pUdjSQA3ss9edbJUJc/XcYAiheSSz" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+</head>
+<body>
+    <script src="{{ url_for('static', filename='time_reference.js') }}"></script> 
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function() {
-            function logMessage(text) {
-                $('#log').append('<br>' + $('<div/>').text(text).html());
-            };
-
-            $( "#trigger" ).on( "submit", function( event ) {
-                socket.emit('log', 'Trigger');
-                logMessage('Trigger pushed');
-                event.preventDefault();
-            });
-
             // Connect to the Socket.IO server.
             // The connection URL has the following format, relative to the current page:
             //     http[s]://<domain>:<port>[/<namespace>]
             var socket = io();
 
-            socket.on('connect', function() {
-                socket.emit('log', 'I\'m connected!');
+            function logMessage(text) {
+                socket.emit("log", text);
+                $("#log").append("<br>" + $("<div/>").text(text).html());
+            };
+
+            socket.on("connect", function() {
                 logMessage("Connected to server")
             });
 
+            // This is an example for adding a button action
+            $( "#trigger" ).on( "submit", function( event ) {
+                logMessage("Trigger pushed");
+                event.preventDefault();
+            });
+
+            registerTimeReferencePublisher(socket);
+
         });
     </script>
-</head>
-<body>
     <h1>ROS2 Phone As A Robot</h1>
 
     <form id="trigger" method="POST" action="#">

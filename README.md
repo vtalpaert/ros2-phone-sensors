@@ -15,3 +15,12 @@ colcon build --packages-up-to phone_as_a_robot --event-handlers console_direct+
 ## Usage
 
 TODO
+
+## TODO
+
+- Explain usage
+- Add GPS
+- Add IMU
+- Add Orientation
+- Add [Serial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) or Bluetooth
+- Add video streaming
