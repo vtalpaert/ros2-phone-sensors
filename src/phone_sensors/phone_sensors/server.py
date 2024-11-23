@@ -8,6 +8,11 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import String
 from sensor_msgs.msg import TimeReference
+from sensor_msgs.msg import Imu
+
+from .message_converters import *
+
+package_name = "phone_sensors"
 
 
 class StoppableThread(threading.Thread):
@@ -28,32 +33,58 @@ class StoppableThread(threading.Thread):
 class ServerNode(Node):
 
     def __init__(self):
-        super().__init__("phone_sensors")
+        super().__init__(package_name + "_node")
+        self.name_param = self.declare_parameter("name", package_name)
+        name = self.name_param.value
 
         self.host_param = self.declare_parameter("host", "0.0.0.0")
         self.port_param = self.declare_parameter("port", 2000)
         self.debug_param = self.declare_parameter("debug", True)
 
-        self.time_reference_interval_param = self.declare_parameter(
-            "time_reference_interval", 20
-        )  # [ms]
+        # TODO add a parameter to use ROS time instead of device time
+
+        self.time_reference_source_device_param = self.declare_parameter(
+            "time_reference_source_device", "ros_to_device"
+        )
+        self.frame_id_imu_param = self.declare_parameter("frame_id_imu", name)
+        self.frame_id_gnss_param = self.declare_parameter("frame_id_gnss", name)
+        self.time_reference_source_gnss_param = self.source_time_reference_param = (
+            self.declare_parameter("time_reference_source_gnss", "device_to_gnss")
+        )
+
+        # Declare all parameters to send to the client
+        # Intervals are in [ms]
+        self.client_params = self.declare_parameters(
+            "",
+            (
+                ("time_reference_set_interval", -1),
+                ("imu_set_interval", -1),
+                ("gnss_set_interval", 1000),
+            ),
+        )
 
         self.time_reference_publisher = self.create_publisher(TimeReference, "time", 10)
+        self.imu_publisher = self.create_publisher(Imu, "imu", 10)
 
     def log_message(self, message):
         self.get_logger().info(message)
 
     def handle_data(self, data):
-        print(data)
-        if "date_ms" in data:
-            _floating_sec = float(data["date_ms"]) / 1000
-            sec = int(_floating_sec)
-            nanosec = int((_floating_sec - sec) * 1e9)
-            msg = TimeReference()
-            msg.header.stamp = self.get_clock().now().to_msg()
-            msg.time_ref.sec = sec
-            msg.time_ref.nanosec = nanosec
-            msg.source = "phone"
+        if "gnss" in data:
+            data_to_gnss_msgs(
+                data,
+                self.frame_id_gnss_param.value,
+                self.time_reference_source_gnss_param.value,
+            )
+        elif "imu" in data:
+            msg = data_to_imu_msg(data, self.frame_id_imu_param.value)
+            self.imu_publisher.publish(msg)
+        else:
+            msg = data_to_time_reference_msg(
+                data,
+                self.get_clock().now(),
+                self.time_reference_source_device_param.value,
+            )
             self.time_reference_publisher.publish(msg)
 
 
@@ -63,10 +94,14 @@ class ServerApp:
 
         # Get folders from install/ path
         template_folder = os.path.join(
-            os.environ["COLCON_PREFIX_PATH"], "phone_as_a_robot", "lib", "templates"
+            os.environ["COLCON_PREFIX_PATH"], package_name, "lib", "templates"
         )
         static_folder = os.path.join(
-            os.environ["COLCON_PREFIX_PATH"], "phone_as_a_robot", "lib", "static"
+            os.environ["COLCON_PREFIX_PATH"], package_name, "lib", "static"
+        )
+        print(
+            "Running with template folder %s and static folder %s"
+            % (template_folder, static_folder)
         )
         self.app = Flask(
             __name__, template_folder=template_folder, static_folder=static_folder
@@ -84,10 +119,11 @@ class ServerApp:
         @self.socketio.on("connect")
         def handle_connect_event():
             # Configure client based on ROS parameters
-            emit(
-                "time_reference_set_interval",
-                self.node.time_reference_interval_param.value,
-            )
+            for param in self.node.client_params:
+                emit(
+                    param.name,
+                    param.value,
+                )
 
         @self.socketio.on("log")
         def handle_log_event(message):
@@ -103,6 +139,7 @@ class ServerApp:
             self.node.host_param.value,
             self.node.port_param.value,
             debug=self.node.debug_param.value,
+            ssl_context="adhoc",
         )
 
 
@@ -110,7 +147,7 @@ def main(args=None):
     rclpy.init(args=args)
     node = ServerNode()
     thread = StoppableThread(
-        target=rclpy.spin, args=(node,), name="phone_sensors_node_thread"
+        target=rclpy.spin, args=(node,), name=package_name + "_node_thread"
     )
     app = ServerApp(node)
     try:

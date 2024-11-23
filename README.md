@@ -38,7 +38,7 @@ ros2 run phone_sensors server
 - [ ] Explain usage
 - [ ] Document server files
 - [x] Publish [TimeReference](https://docs.ros2.org/foxy/api/sensor_msgs/msg/TimeReference.html)
-- [ ] Publish [IMU](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Imu.html)
+- [x] Publish [IMU](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Imu.html)
 - [ ] Publish [GPS (NavSatFix)](https://docs.ros2.org/foxy/api/sensor_msgs/msg/NavSatFix.html)
 - [ ] Publish [CameraInfo](https://docs.ros2.org/foxy/api/sensor_msgs/msg/CameraInfo.html)
 - [ ] Publish [video stream (Image)](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Image.html)

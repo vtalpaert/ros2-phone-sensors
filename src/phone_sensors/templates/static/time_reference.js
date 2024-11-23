@@ -17,6 +17,8 @@ function registerTimeReferencePublisher(socket) {
 
     socket.on("time_reference_set_interval", function(interval, cb) {
         timeReferenceStopSending();
-        timeReferenceStartSending(interval);
+        if (interval >= 0) {
+            timeReferenceStartSending(interval);
+        }
     });
 }
