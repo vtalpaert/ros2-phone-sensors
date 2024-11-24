@@ -9,17 +9,25 @@
     <script src="{{ url_for('static', filename='time_reference.js') }}"></script>
     <script src="{{ url_for('static', filename='imu.js') }}"></script>
     <script src="{{ url_for('static', filename='gnss.js') }}"></script>
+    <script src="{{ url_for('static', filename='video.js') }}"></script>
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function() {
-            // Connect to the Socket.IO server.
-            // The connection URL has the following format, relative to the current page:
-            //     http[s]://<domain>:<port>[/<namespace>]
             var socket = io();
+            registerTimeReferencePublisher(socket); // from time_reference.js
+            registerImuPublisher(socket); // from imu.js
+            registerGpsPublisher(socket); // from gnss.js
+            registerVideoFunctions(socket, window); // from video.js
 
             function logMessage(text) {
                 socket.emit("info", text);
                 $("#log").append("<br>" + $("<div/>").text(text).html());
             };
+
+            // This is an example for adding a button action
+            $( "#trigger" ).on( "submit", function( event ) {
+                logMessage("Trigger pushed");
+                event.preventDefault();
+            });
 
             Promise.all([
                 navigator.permissions.query({ name: "accelerometer" }),
@@ -36,19 +44,10 @@
             });
 
             socket.on("connect", function() {
-                logMessage("Connected to server")
+                logMessage("Connected to server");
             });
 
-            // This is an example for adding a button action
-            $( "#trigger" ).on( "submit", function( event ) {
-                logMessage("Trigger pushed");
-                event.preventDefault();
-            });
-
-            registerTimeReferencePublisher(socket); // from time_reference.js
-            registerImuPublisher(socket); // from imu.js
-            registerGpsPublisher(socket); // from gnss.js
-
+            window.triggerStreamToDeviceInfos();
         });
     </script>
     <h1>ROS2 Phone Sensors</h1>
@@ -56,6 +55,8 @@
     <form id="trigger" method="POST" action="#">
         <input type="submit" value="Trigger">
     </form>
+
+    <a href="/test-video-permissions">Open video test page</a>
 
     <h2>Receive:</h2>
     <div id="log"></div>

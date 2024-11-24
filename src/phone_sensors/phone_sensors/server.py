@@ -57,9 +57,10 @@ class ServerNode(Node):
         self.client_params = self.declare_parameters(
             "",
             (
-                ("time_reference_set_interval", 100),
-                ("imu_set_interval", 20),
-                ("gnss_set_interval", 100),
+                ("time_reference_set_interval", -1),
+                ("imu_set_interval", -1),
+                ("gnss_set_interval", -1),
+                ("camera_device_label", "Facing front:1"),
             ),
         )
 
@@ -93,6 +94,10 @@ class ServerNode(Node):
         elif "imu" in data:
             msg = data_to_imu_msg(data, self.frame_id_imu_param.value)
             self.imu_publisher.publish(msg)
+        elif "device_info" in data:
+            self.get_logger().info(
+                "Detected camera device with label %s" % data["device_info"]["label"]
+            )
         else:
             msg = data_to_time_reference_msg(
                 data,
@@ -130,6 +135,10 @@ class ServerApp:
                 async_mode=self.socketio.async_mode,
             )
 
+        @self.app.route("/test-video-permissions")
+        def test_permissions():
+            return render_template("test_video_permissions.html")
+
         @self.socketio.on("connect")
         def handle_connect_event():
             # Configure client based on ROS parameters
@@ -161,6 +170,7 @@ class ServerApp:
             self.node.host_param.value,
             self.node.port_param.value,
             debug=self.node.debug_param.value,
+            use_reloader=False,
             ssl_context="adhoc",
         )
 
@@ -177,9 +187,9 @@ def main(args=None):
         app.run()
     finally:
         thread.stop()
-        thread.join()
-        # node.destroy_node()
+        node.destroy_node()
         # rclpy.shutdown()
+        thread.join()
 
 
 if __name__ == "__main__":
