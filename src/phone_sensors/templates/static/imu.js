@@ -73,7 +73,7 @@ function registerImuPublisher(socket) {
 
     var imuLoop = 0;
     function imuStartSending(sendInterval) {
-        socket.emit("log", "Sending imu with interval " + sendInterval + " ms");
+        socket.emit("info", "Sending imu with interval " + sendInterval + " ms");
         imuLoop = setInterval(imuSendData, sendInterval);
     };
     function imuStopSending() {

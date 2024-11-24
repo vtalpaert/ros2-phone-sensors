@@ -17,7 +17,7 @@
             var socket = io();
 
             function logMessage(text) {
-                socket.emit("log", text);
+                socket.emit("info", text);
                 $("#log").append("<br>" + $("<div/>").text(text).html());
             };
 

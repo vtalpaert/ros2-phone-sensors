@@ -1,8 +1,8 @@
 function registerGpsPublisher(socket) {
     const options = {
-        enableHighAccuracy: false,
-        maximumAge: 300000,
-        timeout: 270000,
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 1000,
     };
 
     function success(position) {
@@ -13,16 +13,16 @@ function registerGpsPublisher(socket) {
     }
 
     function error(error) {
-        socket.emit("log", error.message);
+        socket.emit("error", error.message);
     }
 
     function gnssSendData(position) {
-        navigator.geolocation.getCurrentPosition(success, error);
+        navigator.geolocation.getCurrentPosition(success, error, options);
     }
 
     var gnssLoop = 0;
     function gnssStartSending(sendInterval) {
-        socket.emit("log", "Sending gnss with interval " + sendInterval + " ms");
+        socket.emit("info", "Sending gnss with interval " + sendInterval + " ms");
         gnssLoop = setInterval(gnssSendData, sendInterval);
     };
     function gnssStopSending() {
@@ -42,7 +42,6 @@ function registerGpsPublisher(socket) {
         });
     } else {
         /* geolocation IS NOT available */
-        socket.emit("log", "Geolocation not available");
+        socket.emit("error", "Geolocation not available");
     }
-
 }

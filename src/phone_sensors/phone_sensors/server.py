@@ -6,9 +6,9 @@ from flask_socketio import SocketIO, emit
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import String
 from sensor_msgs.msg import TimeReference
 from sensor_msgs.msg import Imu
+from sensor_msgs.msg import NavSatFix
 
 from .message_converters import *
 
@@ -57,25 +57,39 @@ class ServerNode(Node):
         self.client_params = self.declare_parameters(
             "",
             (
-                ("time_reference_set_interval", -1),
-                ("imu_set_interval", -1),
-                ("gnss_set_interval", 1000),
+                ("time_reference_set_interval", 100),
+                ("imu_set_interval", 20),
+                ("gnss_set_interval", 100),
             ),
         )
 
-        self.time_reference_publisher = self.create_publisher(TimeReference, "time", 10)
+        self.time_reference_device_publisher = self.create_publisher(
+            TimeReference, "time/device", 10
+        )
         self.imu_publisher = self.create_publisher(Imu, "imu", 10)
+        self.gnss_publisher = self.create_publisher(NavSatFix, "gnss", 10)
+        self.time_reference_gnss_publisher = self.create_publisher(
+            TimeReference, "time/gnss", 10
+        )
 
-    def log_message(self, message):
+    def log_debug(self, message):
+        self.get_logger().debug(message)
+
+    def log_info(self, message):
         self.get_logger().info(message)
+
+    def log_error(self, message):
+        self.get_logger().error(message)
 
     def handle_data(self, data):
         if "gnss" in data:
-            data_to_gnss_msgs(
+            fix, time = data_to_gnss_msgs(
                 data,
                 self.frame_id_gnss_param.value,
                 self.time_reference_source_gnss_param.value,
             )
+            self.gnss_publisher.publish(fix)
+            self.time_reference_gnss_publisher.publish(time)
         elif "imu" in data:
             msg = data_to_imu_msg(data, self.frame_id_imu_param.value)
             self.imu_publisher.publish(msg)
@@ -85,7 +99,7 @@ class ServerNode(Node):
                 self.get_clock().now(),
                 self.time_reference_source_device_param.value,
             )
-            self.time_reference_publisher.publish(msg)
+            self.time_reference_device_publisher.publish(msg)
 
 
 class ServerApp:
@@ -125,9 +139,17 @@ class ServerApp:
                     param.value,
                 )
 
-        @self.socketio.on("log")
-        def handle_log_event(message):
-            self.node.log_message(message)
+        @self.socketio.on("debug")
+        def handle_debug_event(message):
+            self.node.log_debug(message)
+
+        @self.socketio.on("info")
+        def handle_info_event(message):
+            self.node.log_info(message)
+
+        @self.socketio.on("error")
+        def handle_error_event(message):
+            self.node.log_error(message)
 
         @self.socketio.on("data")
         def handle_data_event(data):

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>phone_sensors_examples</name>
+  <version>0.0.0</version>
+  <description>Examples for phone_sensors</description>
+  <maintainer email="victor.talpaert@gmail.com">victor</maintainer>
+  <license>Apache-2.0</license>
+
+  <exec_depend>imu_tools</exec_depend>
+  <exec_depend>ros2launch</exec_depend>
+  <exec_depend>rviz_satellite</exec_depend>
+
+  <depend>phone_sensors</depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

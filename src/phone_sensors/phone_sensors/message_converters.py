@@ -125,4 +125,4 @@ def data_to_gnss_msgs(data, frame_id, source):
     time.time_ref.nanosec = ts_nanosec
     time.source = source
 
-    print(fix, time)
+    return fix, time

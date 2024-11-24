@@ -5,7 +5,7 @@ function registerTimeReferencePublisher(socket) {
 
     var timeReferenceLoop = 0;
     function timeReferenceStartSending(sendInterval) {
-        socket.emit("log", "Sending timeReference with interval " + sendInterval + " ms");
+        socket.emit("info", "Sending timeReference with interval " + sendInterval + " ms");
         timeReferenceLoop = setInterval(timeReferenceSendData, sendInterval);
     };
     function timeReferenceStopSending() {
