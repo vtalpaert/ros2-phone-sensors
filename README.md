@@ -26,26 +26,26 @@ ros2 run phone_sensors server --ros-args -p video_width:=1280 -p video_height:=7
 
 ### Parameters
 
-| Name | Type | Unit | Description |
-|------|------|------|-------------|
-| `host` | string | IP | Use `0.0.0.0` to accept connections outside of localhost |
-| `port` | int | | The port where the server listens on |
-| `debug` | bool | | Use Flask in debug mode |
-| `use_ros_time` | bool | | Use ROS time instead of device time for message timestamps |
-| `time_reference_source_device` | string | | Source identifier for device TimeReference messages |
-| `frame_id_imu` | string | | Frame ID for IMU messages |
-| `frame_id_gnss` | string | | Frame ID for GNSS messages |
-| `frame_id_image` | string | | Frame ID for camera image messages |
-| `time_reference_source_gnss` | string | | Source identifier for GNSS TimeReference messages |
-| `time_reference_frequency` | float | Hz | Rate to emit TimeReference data |
-| `imu_frequency` | float | Hz | Rate to emit IMU data |
-| `gnss_frequency` | float | Hz | Rate to emit GNSS data |
-| `camera_device_label` | string | | Label to identify which camera to use |
-| `show_video_preview` | bool | | Show video preview on client device |
-| `video_fps` | int | Hz | Video frame rate |
-| `video_width` | int | pixels | Video frame width |
-| `video_height` | int | pixels | Video frame height |
-| `video_compression` | float | 0-1 | JPEG compression quality (0=max compression, 1=best quality) |
+| Name | Type | Default | Unit | Description |
+|------|------|---------|------|-------------|
+| `host` | string | "0.0.0.0" | IP | Use `0.0.0.0` to accept connections outside of localhost |
+| `port` | int | 2000 | | The port where the server listens on |
+| `debug` | bool | True | | Use Flask in debug mode |
+| `use_ros_time` | bool | False | | Use ROS time instead of device time for message timestamps |
+| `time_reference_source_device` | string | "ros_to_device" | | Source identifier for device TimeReference messages |
+| `frame_id_imu` | string | package_name | | Frame ID for IMU messages |
+| `frame_id_gnss` | string | package_name | | Frame ID for GNSS messages |
+| `frame_id_image` | string | package_name | | Frame ID for camera image messages |
+| `time_reference_source_gnss` | string | "device_to_gnss" | | Source identifier for GNSS TimeReference messages |
+| `time_reference_frequency` | float | -1 | Hz | Rate to emit TimeReference data |
+| `imu_frequency` | float | 100 | Hz | Rate to emit IMU data |
+| `gnss_frequency` | float | 10 | Hz | Rate to emit GNSS data |
+| `camera_device_label` | string | "Facing front:1" | | Label to identify which camera to use |
+| `show_video_preview` | bool | True | | Show video preview on client device |
+| `video_fps` | int | 30 | Hz | Video frame rate |
+| `video_width` | int | 1280 | pixels | Video frame width |
+| `video_height` | int | 720 | pixels | Video frame height |
+| `video_compression` | float | 0.3 | 0-1 | JPEG compression quality (0=max compression, 1=best quality) |
 
 A negative value for the time reference, IMU or GNSS frequencies will disable sending the corresponding data from the client device. This allows conserving bandwidth and processing power when certain sensors are not needed.
 
