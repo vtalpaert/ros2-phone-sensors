@@ -3,3 +3,4 @@ flask
 pyOpenSSL  # for ssl_context="adhoc"
 opencv-python
 numpy
+robot_localization

@@ -1,0 +1,36 @@
+/**:
+  ros__parameters:
+    # Phone Sensors Server Node Parameters
+    host: "0.0.0.0"
+    port: 2000
+    debug: true
+    use_ros_time: true
+    time_reference_source_device: "ros_to_device"
+    frame_id_imu: "phone"
+    frame_id_gnss: "phone"
+    frame_id_image: "phone_camera"
+    time_reference_source_gnss: "device_to_gnss"
+    time_reference_frequency: 10.0
+    imu_frequency: 100.0
+    gnss_frequency: 10.0
+    camera_device_label: "Facing front:1"
+    show_video_preview: true
+    video_fps: 30
+    video_width: 1280
+    video_height: 720
+    video_compression: 0.3
+
+    # NavSat Transform Node Parameters
+    navsat_transform_node:
+      ros__parameters:
+        frequency: 30.0
+        delay: 3.0
+        magnetic_declination_radians: 0.0
+        yaw_offset: 0.0
+        zero_altitude: true
+        broadcast_utm_transform: true
+        publish_filtered_gps: true
+        use_odometry_yaw: false
+        wait_for_datum: false  # Will create datum automatically from first GPS message
+        datum: ""  # Empty string means no manual datum
+        transform_timeout: 0.0
