@@ -4,6 +4,51 @@
     <title>ROS2 Phone Sensors</title>
     <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha384-5AkRS45j4ukf+JbWAfHL8P4onPA9p0KwwP7pUdjSQA3ss9edbJUJc/XcYAiheSSz" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #00ff00;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+        #trigger input[type="submit"] {
+            background-color: #004400;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        #trigger input[type="submit"]:hover {
+            background-color: #006600;
+        }
+        a {
+            color: #00ff00;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        #log {
+            background-color: #2a2a2a;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-family: monospace;
+        }
+        video {
+            max-width: 100%;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
     <h1>ROS2 Phone Sensors</h1>
@@ -61,6 +106,26 @@
 
             socket.on("connect", function() {
                 logMessage("Connected to server");
+            });
+
+            socket.on("show_video_preview", function(value) {
+                window.showVideoPreview = value;
+                logMessage("Video preview setting: " + value);
+            });
+
+            socket.on("video_fps", function(value) {
+                window.videoFps = value;
+                logMessage("Video FPS setting: " + value);
+            });
+
+            socket.on("video_width", function(value) {
+                window.videoWidth = value;
+                logMessage("Video width setting: " + value);
+            });
+
+            socket.on("video_height", function(value) {
+                window.videoHeight = value;
+                logMessage("Video height setting: " + value);
             });
 
         });

@@ -61,6 +61,10 @@ class ServerNode(Node):
                 ("imu_set_interval", -1),
                 ("gnss_set_interval", -1),
                 ("camera_device_label", "Facing front:1"),
+                ("show_video_preview", True),
+                ("video_fps", 30),
+                ("video_width", 1920),
+                ("video_height", 1080),
             ),
         )
 
@@ -102,16 +106,16 @@ class ServerNode(Node):
                 "Detected camera device with label %s" % data["device_info"]["label"]
             )
         elif "video_frame" in data:
-            img_msg = data_to_image_msg(
-                data,
-                self.bridge,
-                self.frame_id_imu_param.value,
-                self.get_clock().now().to_msg()
-            )
-            if img_msg is not None:
+            try:
+                img_msg = data_to_image_msg(
+                    data,
+                    self.bridge,
+                    self.frame_id_imu_param.value,
+                    self.get_clock().now().to_msg()
+                )
                 self.video_publisher.publish(img_msg)
-            else:
-                self.get_logger().warning("Failed to convert video frame to ROS message")
+            except ValueError as e:
+                self.get_logger().warning(f"Failed to convert video frame: {str(e)}")
         else:
             msg = data_to_time_reference_msg(
                 data,

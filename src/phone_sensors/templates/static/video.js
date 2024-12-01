@@ -31,10 +31,12 @@ function registerVideoFunctions(socket, window, videoElement) {
                 });
                 // Add delay after stopping tracks
                 setTimeout(() => {
-                    // width: { ideal: 4096 },
-                    // height: { ideal: 2160 } 
                     const constraints = {
-                        video: {deviceId: videoSource ? {exact: videoSource} : undefined}
+                        video: {
+                            deviceId: videoSource ? {exact: videoSource} : undefined,
+                            width: { exact: window.videoWidth || 1920 },
+                            height: { exact: window.videoHeight || 1080 }
+                        }
                     };
                     socket.emit("info", "Opening stream with constraints " + JSON.stringify(constraints));
                     navigator.mediaDevices.getUserMedia(constraints)
@@ -63,15 +65,23 @@ function registerVideoFunctions(socket, window, videoElement) {
 
     function gotStream(stream) {
         window.stream = stream;
-        socket.emit("info", "media gotStream");
-        videoElement.srcObject = stream;
+        // First time we open the stream, hide preview
+        if (!window.firstStreamOpened) {
+            window.firstStreamOpened = true;
+            videoElement.style.display = 'none';
+        } else if (window.showVideoPreview) {
+            videoElement.srcObject = stream;
+        } else {
+            videoElement.style.display = 'none';
+        }
         
         // Create canvas for frame capture
         const canvas = document.createElement('canvas');
         const context = canvas.getContext('2d');
         
-        // Set capture interval (e.g., 30fps)
-        setInterval(() => {
+        // Set capture interval based on FPS parameter
+        const interval = Math.floor(1000 / (window.videoFps || 30));
+        const captureLoop = setInterval(() => {
             canvas.width = videoElement.videoWidth;
             canvas.height = videoElement.videoHeight;
             context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
@@ -97,17 +107,20 @@ function registerVideoFunctions(socket, window, videoElement) {
     socket.on("camera_device_label", function(label, cb) {
         socket.emit("info", "You selected device with label " + label)
         videoLabel = label;
-        getStream()
-            .then(getDevices)
-            .then(gotDevices)
-            .then(() => {
-                let waitTime = 1000;
-                socket.emit("info", "Waiting " + waitTime + "ms to restart video with your label");
-                return new Promise(resolve => setTimeout(resolve, waitTime));
-            })
-            .then(() => getStream())
-            .catch(error => {
-                socket.emit("error", "Error in camera setup sequence: " + error.toString());
-            });
+        // Initial delay to ensure we receive parameters
+        setTimeout(() => {
+            getStream()
+                .then(getDevices)
+                .then(gotDevices)
+                .then(() => {
+                    let waitTime = 1000;
+                    socket.emit("info", "Waiting " + waitTime + "ms to restart video with your label");
+                    return new Promise(resolve => setTimeout(resolve, waitTime));
+                })
+                .then(() => getStream())
+                .catch(error => {
+                    socket.emit("error", "Error in camera setup sequence: " + error.toString());
+                });
+        }, 1000);
     });
 }
