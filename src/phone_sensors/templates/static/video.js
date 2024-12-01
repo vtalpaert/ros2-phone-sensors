@@ -92,7 +92,7 @@ function registerVideoFunctions(socket, window, videoElement) {
                 date_ms: Date.now(),
                 video_frame: frame
             });
-        }, 33); // ~30fps
+        }, interval);
     }
 
     function handleError(error) {
