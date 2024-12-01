@@ -69,10 +69,13 @@ function registerVideoFunctions(socket, window, videoElement) {
         if (!window.firstStreamOpened) {
             window.firstStreamOpened = true;
             videoElement.style.display = 'none';
-        } else if (window.showVideoPreview) {
-            videoElement.srcObject = stream;
         } else {
-            videoElement.style.display = 'none';
+            if (window.showVideoPreview) {
+                videoElement.style.display = 'block';
+                videoElement.srcObject = stream;
+            } else {
+                videoElement.style.display = 'none';
+            }
         }
         
         // Create canvas for frame capture
