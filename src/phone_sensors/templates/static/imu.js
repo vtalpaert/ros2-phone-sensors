@@ -83,9 +83,10 @@ function registerImuPublisher(socket) {
         socket.sendBuffer = [];  // empty buffer to stop sending
     };
 
-    socket.on("imu_set_interval", function(interval, cb) {
+    socket.on("imu_frequency", function(value, cb) {
         imuStopSending();
-        if (interval >= 0) {
+        if (value > 0) {
+            const interval = Math.floor(1000 / value);  // convert Hz to ms
             imuStartSending(interval);
         }
     });

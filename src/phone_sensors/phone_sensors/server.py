@@ -58,9 +58,9 @@ class ServerNode(Node):
         self.client_params = self.declare_parameters(
             "",
             (
-                ("time_reference_set_interval", -1),
-                ("imu_set_interval", -1),
-                ("gnss_set_interval", -1),
+                ("time_reference_frequency", -1),
+                ("imu_frequency", 100),  # 100 Hz for IMU
+                ("gnss_frequency", 10),  # 10 Hz for GNSS
                 ("camera_device_label", "Facing front:1"),
                 ("show_video_preview", True),
                 ("video_fps", 30),

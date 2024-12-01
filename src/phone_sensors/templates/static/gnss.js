@@ -34,9 +34,10 @@ function registerGpsPublisher(socket) {
 
     if ("geolocation" in navigator) {
         /* geolocation is available */
-        socket.on("gnss_set_interval", function(interval, cb) {
+        socket.on("gnss_frequency", function(value, cb) {
             gnssStopSending();
-            if (interval >= 0) {
+            if (value > 0) {
+                const interval = Math.floor(1000 / value);  // convert Hz to ms
                 gnssStartSending(interval);
             }
         });
