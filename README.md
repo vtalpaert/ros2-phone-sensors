@@ -37,12 +37,12 @@ ros2 run phone_sensors server --ros-args -p video_width:=1280 -p video_height:=7
 | `frame_id_gnss` | string | package_name | | Frame ID for GNSS messages |
 | `frame_id_image` | string | package_name | | Frame ID for camera image messages |
 | `time_reference_source_gnss` | string | "device_to_gnss" | | Source identifier for GNSS TimeReference messages |
-| `time_reference_frequency` | float | -1 | Hz | Rate to emit TimeReference data |
-| `imu_frequency` | float | 100 | Hz | Rate to emit IMU data |
-| `gnss_frequency` | float | 10 | Hz | Rate to emit GNSS data |
+| `time_reference_frequency` | float | -1.0 | Hz | Rate to emit TimeReference data |
+| `imu_frequency` | float | 100.0 | Hz | Rate to emit IMU data |
+| `gnss_frequency` | float | 10.0 | Hz | Rate to emit GNSS data |
 | `camera_device_label` | string | "Facing front:1" | | Label to identify which camera to use |
 | `show_video_preview` | bool | True | | Show video preview on client device |
-| `video_fps` | int | 30 | Hz | Video frame rate |
+| `video_fps` | float | 30.0 | Hz | Video frame rate |
 | `video_width` | int | 1280 | pixels | Video frame width |
 | `video_height` | int | 720 | pixels | Video frame height |
 | `video_compression` | float | 0.3 | 0-1 | JPEG compression quality (0=max compression, 1=best quality) |

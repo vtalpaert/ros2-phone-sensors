@@ -58,12 +58,12 @@ class ServerNode(Node):
         self.client_params = self.declare_parameters(
             "",
             (
-                ("time_reference_frequency", -1),
-                ("imu_frequency", 100),  # 100 Hz for IMU
-                ("gnss_frequency", 10),  # 10 Hz for GNSS
+                ("time_reference_frequency", -1.0),
+                ("imu_frequency", 100.0),  # 100 Hz for IMU
+                ("gnss_frequency", 10.0),  # 10 Hz for GNSS
                 ("camera_device_label", "Facing front:1"),
                 ("show_video_preview", True),
-                ("video_fps", 30),
+                ("video_fps", 30.0),
                 ("video_width", 1280),  # Default to 720p resolution (horizontal)
                 ("video_height", 720),   # Default to 720p resolution (vertical)
                 ("video_compression", 0.3),
