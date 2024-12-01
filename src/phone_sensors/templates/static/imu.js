@@ -1,8 +1,8 @@
-function registerImuPublisher(socket) {
+function registerImuPublisher(socket, window) {
     var include_gravity = false;
-
-    var motion_init = false;
-    var orientation_init = false
+    window.motion_permission_granted = false;
+    window.motion_init = false;
+    window.orientation_init = false;
 
     var ax = 0;
     var ay = 0;
@@ -73,8 +73,12 @@ function registerImuPublisher(socket) {
 
     var imuLoop = 0;
     function imuStartSending(sendInterval) {
-        socket.emit("info", "Sending imu with interval " + sendInterval + " ms");
-        imuLoop = setInterval(imuSendData, sendInterval);
+        if (window.motion_permission_granted) {
+            socket.emit("info", "Sending imu with interval " + sendInterval + " ms");
+            imuLoop = setInterval(imuSendData, sendInterval);
+        } else {
+            socket.emit("error", "Cannot start IMU: motion permission not granted");
+        }
     };
     function imuStopSending() {
         if (imuLoop != 0) {

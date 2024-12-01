@@ -96,14 +96,17 @@ class ServerNode(Node):
                 if self.use_ros_time_param.value
                 else False
             )
-            fix, time = data_to_gnss_msgs(
-                data,
-                ros_time,
-                self.frame_id_gnss_param.value,
-                self.time_reference_source_gnss_param.value,
-            )
-            self.gnss_publisher.publish(fix)
-            self.time_reference_gnss_publisher.publish(time)
+            try:
+                fix, time = data_to_gnss_msgs(
+                    data,
+                    ros_time,
+                    self.frame_id_gnss_param.value,
+                    self.time_reference_source_gnss_param.value,
+                )
+                self.gnss_publisher.publish(fix)
+                self.time_reference_gnss_publisher.publish(time)
+            except (TypeError, ValueError) as e:
+                self.get_logger().warning(f"Failed to convert GNSS data: {str(e)}")
         elif "imu" in data:
             ros_time = (
                 self.get_clock().now().to_msg()

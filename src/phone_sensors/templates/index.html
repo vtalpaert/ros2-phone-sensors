@@ -31,12 +31,11 @@
 
             var socket = io();
             registerTimeReferencePublisher(socket); // from time_reference.js
-            registerImuPublisher(socket); // from imu.js
-            registerGpsPublisher(socket); // from gnss.js
+            registerImuPublisher(socket, window); // from imu.js
+            registerGpsPublisher(socket, window); // from gnss.js
             registerVideoFunctions(socket, window, videoElement); // from video.js
 
             function logMessage(text) {
-                socket.emit("info", text);
                 $("#log").append("<br>" + $("<div/>").text(text).html());
             };
 
@@ -46,21 +45,47 @@
                 event.preventDefault();
             });
 
-            Promise.all([
-                navigator.permissions.query({ name: "accelerometer" }),
-                navigator.permissions.query({ name: "magnetometer" }),
-                navigator.permissions.query({ name: "gyroscope" }),
-                navigator.permissions.query({ name: "geolocation" })]
-            ).then(results => {
-                if (results.every(result => result.state === "granted")) {
-                sensor.start();
-                    logMessage("Access to all sensors");
-                } else {
-                    logMessage("No all permissions granted");
-                }
-            });
+            // Request device motion permission
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.motion_permission_granted = true;
+                            socket.emit("info", "Motion permission granted");
+                            logMessage("Motion permission granted");
+                        } else {
+                            socket.emit("error", "Motion permission denied");
+                            logMessage("Motion permission denied");
+                        }
+                    })
+                    .catch(error => {
+                        socket.emit("error", "Error requesting motion permission: " + error);
+                        logMessage("Error requesting motion permission: " + error);
+                    });
+            }
+
+            // Request geolocation permission once
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    () => {
+                        window.geolocation_permission_granted = true;
+                        socket.emit("info", "Geolocation permission granted");
+                        logMessage("Geolocation permission granted");
+                        // Only register GPS publisher if permission is granted
+                        registerGpsPublisher(socket, window);
+                    },
+                    error => {
+                        socket.emit("error", "Geolocation permission denied: " + error.message);
+                        logMessage("Geolocation permission denied: " + error.message);
+                    }
+                );
+            } else {
+                socket.emit("error", "Geolocation not available");
+                logMessage("Geolocation not available");
+            }
 
             socket.on("connect", function() {
+                socket.emit("info", "Connected to server");
                 logMessage("Connected to server");
             });
 

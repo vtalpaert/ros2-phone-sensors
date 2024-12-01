@@ -1,4 +1,5 @@
-function registerGpsPublisher(socket) {
+function registerGpsPublisher(socket, window) {
+    window.geolocation_permission_granted = false;
     const options = {
         enableHighAccuracy: true,
         maximumAge: 1000,
@@ -22,8 +23,12 @@ function registerGpsPublisher(socket) {
 
     var gnssLoop = 0;
     function gnssStartSending(sendInterval) {
-        socket.emit("info", "Sending gnss with interval " + sendInterval + " ms");
-        gnssLoop = setInterval(gnssSendData, sendInterval);
+        if (window.geolocation_permission_granted) {
+            socket.emit("info", "Sending gnss with interval " + sendInterval + " ms");
+            gnssLoop = setInterval(gnssSendData, sendInterval);
+        } else {
+            socket.emit("error", "Cannot start GNSS: geolocation permission not granted");
+        }
     };
     function gnssStopSending() {
         if (gnssLoop != 0) {
@@ -32,17 +37,11 @@ function registerGpsPublisher(socket) {
         socket.sendBuffer = [];  // empty buffer to stop sending
     };
 
-    if ("geolocation" in navigator) {
-        /* geolocation is available */
-        socket.on("gnss_frequency", function(value, cb) {
-            gnssStopSending();
-            if (value > 0) {
-                const interval = Math.floor(1000 / value);  // convert Hz to ms
-                gnssStartSending(interval);
-            }
-        });
-    } else {
-        /* geolocation IS NOT available */
-        socket.emit("error", "Geolocation not available");
-    }
+    socket.on("gnss_frequency", function(value, cb) {
+        gnssStopSending();
+        if (value > 0) {
+            const interval = Math.floor(1000 / value);  // convert Hz to ms
+            gnssStartSending(interval);
+        }
+    });
 }
