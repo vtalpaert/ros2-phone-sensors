@@ -2,6 +2,31 @@ function registerVideoFunctions(socket, window, videoElement) {
     var videoSource;
     var videoLabel;
     
+    socket.on("show_video_preview", function(value) {
+        window.showVideoPreview = value;
+        socket.emit("info", "Video preview setting: " + value);
+    });
+
+    socket.on("video_fps", function(value) {
+        window.videoFps = value;
+        socket.emit("info", "Video FPS setting: " + value);
+    });
+
+    socket.on("video_width", function(value) {
+        window.videoWidth = value;
+        socket.emit("info", "Video width setting: " + value);
+    });
+
+    socket.on("video_height", function(value) {
+        window.videoHeight = value;
+        socket.emit("info", "Video height setting: " + value);
+    });
+
+    socket.on("video_compression", function(value) {
+        window.videoCompression = value;
+        socket.emit("info", "Video compression setting: " + value);
+    });
+    
     function getDevices() {
         return navigator.mediaDevices.enumerateDevices();
     }
@@ -89,12 +114,15 @@ function registerVideoFunctions(socket, window, videoElement) {
             canvas.height = videoElement.videoHeight;
             context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
             
-            // Convert to base64 and send through websocket
-            const frame = canvas.toDataURL('image/jpeg', 0.7);
-            socket.emit("data", {
-                date_ms: Date.now(),
-                video_frame: frame
-            });
+            // Only send if frame is not empty
+            if (canvas.width > 0 && canvas.height > 0) {
+                // Convert to base64 and send through websocket
+                const frame = canvas.toDataURL('image/jpeg', window.videoCompression || 0.7);
+                socket.emit("data", {
+                    date_ms: Date.now(),
+                    video_frame: frame
+                });
+            }
         }, interval);
     }
 

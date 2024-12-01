@@ -64,25 +64,6 @@
                 logMessage("Connected to server");
             });
 
-            socket.on("show_video_preview", function(value) {
-                window.showVideoPreview = value;
-                logMessage("Video preview setting: " + value);
-            });
-
-            socket.on("video_fps", function(value) {
-                window.videoFps = value;
-                logMessage("Video FPS setting: " + value);
-            });
-
-            socket.on("video_width", function(value) {
-                window.videoWidth = value;
-                logMessage("Video width setting: " + value);
-            });
-
-            socket.on("video_height", function(value) {
-                window.videoHeight = value;
-                logMessage("Video height setting: " + value);
-            });
 
         });
     </script>

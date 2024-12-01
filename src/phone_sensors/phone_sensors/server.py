@@ -41,13 +41,14 @@ class ServerNode(Node):
         self.port_param = self.declare_parameter("port", 2000)
         self.debug_param = self.declare_parameter("debug", True)
 
-        # TODO add a parameter to use ROS time instead of device time
+        self.use_ros_time_param = self.declare_parameter("use_ros_time", False)
 
         self.time_reference_source_device_param = self.declare_parameter(
             "time_reference_source_device", "ros_to_device"
         )
         self.frame_id_imu_param = self.declare_parameter("frame_id_imu", name)
         self.frame_id_gnss_param = self.declare_parameter("frame_id_gnss", name)
+        self.frame_id_image_param = self.declare_parameter("frame_id_image", name)
         self.time_reference_source_gnss_param = self.source_time_reference_param = (
             self.declare_parameter("time_reference_source_gnss", "device_to_gnss")
         )
@@ -65,6 +66,7 @@ class ServerNode(Node):
                 ("video_fps", 30),
                 ("video_width", 1920),
                 ("video_height", 1080),
+                ("video_compression", 0.7),
             ),
         )
 
@@ -76,9 +78,7 @@ class ServerNode(Node):
         self.time_reference_gnss_publisher = self.create_publisher(
             TimeReference, "time/gnss", 10
         )
-        self.video_publisher = self.create_publisher(
-            Image, "camera/image_raw", 10
-        )
+        self.video_publisher = self.create_publisher(Image, "camera/image_raw", 10)
 
     def log_debug(self, message):
         self.get_logger().debug(message)
@@ -91,15 +91,26 @@ class ServerNode(Node):
 
     def handle_data(self, data):
         if "gnss" in data:
+            ros_time = (
+                self.get_clock().now().to_msg()
+                if self.use_ros_time_param.value
+                else False
+            )
             fix, time = data_to_gnss_msgs(
                 data,
+                ros_time,
                 self.frame_id_gnss_param.value,
                 self.time_reference_source_gnss_param.value,
             )
             self.gnss_publisher.publish(fix)
             self.time_reference_gnss_publisher.publish(time)
         elif "imu" in data:
-            msg = data_to_imu_msg(data, self.frame_id_imu_param.value)
+            ros_time = (
+                self.get_clock().now().to_msg()
+                if self.use_ros_time_param.value
+                else False
+            )
+            msg = data_to_imu_msg(data, ros_time, self.frame_id_imu_param.value)
             self.imu_publisher.publish(msg)
         elif "device_info" in data:
             self.get_logger().info(
@@ -110,8 +121,8 @@ class ServerNode(Node):
                 img_msg = data_to_image_msg(
                     data,
                     self.bridge,
-                    self.frame_id_imu_param.value,
-                    self.get_clock().now().to_msg()
+                    self.frame_id_image_param.value,
+                    self.get_clock().now().to_msg(),
                 )
                 self.video_publisher.publish(img_msg)
             except ValueError as e:

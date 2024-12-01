@@ -47,7 +47,7 @@ def data_to_time_reference_msg(data, ros_time, source):
     return msg
 
 
-def data_to_imu_msg(data, frame_id):
+def data_to_imu_msg(data, ros_time, frame_id):
     # Typical input {'date_ms': 1732380161741,
     # 'imu': {'ax': 0.5315127968788147, 'ay': 4.6950297355651855, 'az': 8.413225173950195,
     # 'gx': 5.914999961853027, 'gy': 3.325000047683716, 'gz': 2.0300002098083496,
@@ -57,9 +57,12 @@ def data_to_imu_msg(data, frame_id):
     # Here we will assume the motion delay applies to orientation delay
     # Note that on the client side, motion and orientation are handled separately
     delay_ms = data["imu"]["motion_interval_ms"]
-    sec, nanosec = millisec_to_sec_nanosec(data["date_ms"] - delay_ms)
-    msg.header.stamp.sec = sec
-    msg.header.stamp.nanosec = nanosec
+    if not ros_time:
+        sec, nanosec = millisec_to_sec_nanosec(data["date_ms"] - delay_ms)
+        msg.header.stamp.sec = sec
+        msg.header.stamp.nanosec = nanosec
+    else:
+        msg.header.stamp = ros_time
     msg.header.frame_id = frame_id
     _is_absolute = data["imu"]["absolute"]
     # Here the interpretation of axis is dependant on both the device
@@ -83,7 +86,7 @@ def data_to_imu_msg(data, frame_id):
     return msg
 
 
-def data_to_gnss_msgs(data, frame_id, source):
+def data_to_gnss_msgs(data, ros_time, frame_id, source):
     # Typical input with low accuracy {'date_ms': 1732386620779,
     # 'gnss': {'coords': {'latitude': 48.8868302, 'longitude': 2.3602171, 'altitude': 95.30000305175781,
     # 'accuracy': 100, 'altitudeAccuracy': 100,
@@ -94,9 +97,12 @@ def data_to_gnss_msgs(data, frame_id, source):
     # header.stamp specifies the "ROS" time for this measurement (the
     # corresponding satellite time may be reported using the
     # sensor_msgs/TimeReference message).
-    sec, nanosec = millisec_to_sec_nanosec(data["date_ms"])
-    fix.header.stamp.sec = sec
-    fix.header.stamp.nanosec = nanosec
+    if not ros_time:
+        sec, nanosec = millisec_to_sec_nanosec(data["date_ms"])
+        fix.header.stamp.sec = sec
+        fix.header.stamp.nanosec = nanosec
+    else:
+        fix.header.stamp = ros_time
     fix.header.frame_id = frame_id
     fix.status.status = NavSatStatus.STATUS_FIX  # unaugmented fix
     fix.status.service = 0  # unknown
@@ -158,6 +164,12 @@ def data_to_image_msg(data, bridge, frame_id, ros_time):
         
     # Convert to ROS Image message
     img_msg = bridge.cv2_to_imgmsg(frame, encoding="bgr8")
-    img_msg.header.stamp = ros_time
+    if ros_time is None:
+        # Use the timestamp from the data
+        sec, nanosec = millisec_to_sec_nanosec(data["date_ms"])
+        img_msg.header.stamp.sec = sec
+        img_msg.header.stamp.nanosec = nanosec
+    else:
+        img_msg.header.stamp = ros_time
     img_msg.header.frame_id = frame_id
     return img_msg
