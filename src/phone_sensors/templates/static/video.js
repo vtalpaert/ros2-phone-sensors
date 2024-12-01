@@ -59,8 +59,9 @@ function registerVideoFunctions(socket, window, videoElement) {
                     const constraints = {
                         video: {
                             deviceId: videoSource ? {exact: videoSource} : undefined,
-                            width: { exact: window.videoWidth || 1920 },
-                            height: { exact: window.videoHeight || 1080 }
+                            // Note: width/height are in landscape orientation
+                            width: { ideal: window.videoWidth || 1280 },  // horizontal resolution
+                            height: { ideal: window.videoHeight || 720 }  // vertical resolution
                         }
                     };
                     socket.emit("info", "Opening stream with constraints " + JSON.stringify(constraints));

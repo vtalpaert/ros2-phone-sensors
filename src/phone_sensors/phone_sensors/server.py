@@ -64,9 +64,9 @@ class ServerNode(Node):
                 ("camera_device_label", "Facing front:1"),
                 ("show_video_preview", True),
                 ("video_fps", 30),
-                ("video_width", 1920),
-                ("video_height", 1080),
-                ("video_compression", 0.7),
+                ("video_width", 1280),  # Default to 720p resolution (horizontal)
+                ("video_height", 720),   # Default to 720p resolution (vertical)
+                ("video_compression", 0.3),
             ),
         )
 
