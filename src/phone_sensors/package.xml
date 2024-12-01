@@ -8,6 +8,8 @@
   <license>Apache-2.0</license>
 
   <depend>sensor_msgs</depend>
+  <depend>cv_bridge</depend>
+  <depend>python3-opencv</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

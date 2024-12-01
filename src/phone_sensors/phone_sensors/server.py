@@ -6,9 +6,8 @@ from flask_socketio import SocketIO, emit
 
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import TimeReference
-from sensor_msgs.msg import Imu
-from sensor_msgs.msg import NavSatFix
+from sensor_msgs.msg import TimeReference, Imu, NavSatFix, Image
+import cv_bridge
 
 from .message_converters import *
 
@@ -34,6 +33,7 @@ class ServerNode(Node):
 
     def __init__(self):
         super().__init__(package_name + "_node")
+        self.bridge = cv_bridge.CvBridge()
         self.name_param = self.declare_parameter("name", package_name)
         name = self.name_param.value
 
@@ -72,6 +72,9 @@ class ServerNode(Node):
         self.time_reference_gnss_publisher = self.create_publisher(
             TimeReference, "time/gnss", 10
         )
+        self.video_publisher = self.create_publisher(
+            Image, "camera/image_raw", 10
+        )
 
     def log_debug(self, message):
         self.get_logger().debug(message)
@@ -98,6 +101,17 @@ class ServerNode(Node):
             self.get_logger().info(
                 "Detected camera device with label %s" % data["device_info"]["label"]
             )
+        elif "video_frame" in data:
+            img_msg = data_to_image_msg(
+                data,
+                self.bridge,
+                self.frame_id_imu_param.value,
+                self.get_clock().now().to_msg()
+            )
+            if img_msg is not None:
+                self.video_publisher.publish(img_msg)
+            else:
+                self.get_logger().warning("Failed to convert video frame to ROS message")
         else:
             msg = data_to_time_reference_msg(
                 data,
