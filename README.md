@@ -21,17 +21,33 @@ colcon build --packages-up-to phone_sensors
 
 ```bash
 source install/setup.bash
-ros2 run phone_sensors server
+ros2 run phone_sensors server --ros-args -p video_width:=1280 -p video_height:=720
 ```
 
 ### Parameters
 
 | Name | Type | Unit | Description |
 |------|------|------|-------------|
-| `host` | string | IP | Use `0.0.0.0` to accept connections outside of locahost |
+| `host` | string | IP | Use `0.0.0.0` to accept connections outside of localhost |
 | `port` | int | | The port where the server listens on |
 | `debug` | bool | | Use Flask in debug mode |
-| `time_reference_interval` | int | ms | Rate to emit TimeReference data on the client side |
+| `use_ros_time` | bool | | Use ROS time instead of device time for message timestamps |
+| `time_reference_source_device` | string | | Source identifier for device TimeReference messages |
+| `frame_id_imu` | string | | Frame ID for IMU messages |
+| `frame_id_gnss` | string | | Frame ID for GNSS messages |
+| `frame_id_image` | string | | Frame ID for camera image messages |
+| `time_reference_source_gnss` | string | | Source identifier for GNSS TimeReference messages |
+| `time_reference_frequency` | float | Hz | Rate to emit TimeReference data |
+| `imu_frequency` | float | Hz | Rate to emit IMU data |
+| `gnss_frequency` | float | Hz | Rate to emit GNSS data |
+| `camera_device_label` | string | | Label to identify which camera to use |
+| `show_video_preview` | bool | | Show video preview on client device |
+| `video_fps` | int | Hz | Video frame rate |
+| `video_width` | int | pixels | Video frame width |
+| `video_height` | int | pixels | Video frame height |
+| `video_compression` | float | 0-1 | JPEG compression quality (0=max compression, 1=best quality) |
+
+A negative value for the time reference, IMU or GNSS frequencies will disable sending the corresponding data from the client device. This allows conserving bandwidth and processing power when certain sensors are not needed.
 
 ## TODO
 
@@ -41,7 +57,7 @@ ros2 run phone_sensors server
 - [x] Publish [IMU](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Imu.html)
 - [X] Publish [GPS (NavSatFix)](https://docs.ros2.org/foxy/api/sensor_msgs/msg/NavSatFix.html)
 - [ ] Publish [CameraInfo](https://docs.ros2.org/foxy/api/sensor_msgs/msg/CameraInfo.html)
-- [ ] Publish [video stream (Image)](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Image.html)
+- [x] Publish [video stream (Image)](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Image.html)
 - [ ] Publish orientation as a [Quaternion](http://docs.ros.org/en/api/geometry_msgs/html/msg/Quaternion.html) or [Odometry](http://docs.ros.org/en/api/nav_msgs/html/msg/Odometry.html)
 - [ ] Add [Serial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) or Bluetooth, as a possible way for the phone to send data over USB to a microcontroller
 - [ ] Launch file example to set parameters
