@@ -62,6 +62,11 @@
                         socket.emit("error", "Error requesting motion permission: " + error);
                         logMessage("Error requesting motion permission: " + error);
                     });
+            } else {
+                // For browsers that don't require explicit permission
+                window.motion_permission_granted = true;
+                socket.emit("info", "Motion permission granted by default");
+                logMessage("Motion permission granted by default");
             }
 
             // Request geolocation permission once
@@ -71,8 +76,6 @@
                         window.geolocation_permission_granted = true;
                         socket.emit("info", "Geolocation permission granted");
                         logMessage("Geolocation permission granted");
-                        // Only register GPS publisher if permission is granted
-                        registerGpsPublisher(socket, window);
                     },
                     error => {
                         socket.emit("error", "Geolocation permission denied: " + error.message);

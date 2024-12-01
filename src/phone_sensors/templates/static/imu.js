@@ -77,7 +77,8 @@ function registerImuPublisher(socket, window) {
             socket.emit("info", "Sending imu with interval " + sendInterval + " ms");
             imuLoop = setInterval(imuSendData, sendInterval);
         } else {
-            socket.emit("error", "Cannot start IMU: motion permission not granted");
+            socket.emit("error", "Cannot start IMU: motion permission not granted. Retrying in 1 second...");
+            setTimeout(() => imuStartSending(sendInterval), 1000);
         }
     };
     function imuStopSending() {

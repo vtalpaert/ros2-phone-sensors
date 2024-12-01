@@ -27,7 +27,8 @@ function registerGpsPublisher(socket, window) {
             socket.emit("info", "Sending gnss with interval " + sendInterval + " ms");
             gnssLoop = setInterval(gnssSendData, sendInterval);
         } else {
-            socket.emit("error", "Cannot start GNSS: geolocation permission not granted");
+            socket.emit("error", "Cannot start GNSS: geolocation permission not granted. Retrying in 1 second...");
+            setTimeout(() => gnssStartSending(sendInterval), 1000);
         }
     };
     function gnssStopSending() {

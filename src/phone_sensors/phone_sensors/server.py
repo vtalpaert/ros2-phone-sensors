@@ -113,8 +113,11 @@ class ServerNode(Node):
                 if self.use_ros_time_param.value
                 else False
             )
-            msg = data_to_imu_msg(data, ros_time, self.frame_id_imu_param.value)
-            self.imu_publisher.publish(msg)
+            try:
+                msg = data_to_imu_msg(data, ros_time, self.frame_id_imu_param.value)
+                self.imu_publisher.publish(msg)
+            except (TypeError, ValueError) as e:
+                self.get_logger().warning(f"Failed to convert IMU data: {str(e)}")
         elif "device_info" in data:
             self.get_logger().info(
                 "Detected camera device with label %s" % data["device_info"]["label"]
