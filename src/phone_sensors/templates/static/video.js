@@ -42,6 +42,24 @@ function registerVideoFunctions(socket, window, videoElement) {
         window.stream = stream;
         socket.emit("info", "media gotStream");
         videoElement.srcObject = stream;
+        
+        // Create canvas for frame capture
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d');
+        
+        // Set capture interval (e.g., 30fps)
+        setInterval(() => {
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+            
+            // Convert to base64 and send through websocket
+            const frame = canvas.toDataURL('image/jpeg', 0.7);
+            socket.emit("data", {
+                date_ms: Date.now(),
+                video_frame: frame
+            });
+        }, 33); // ~30fps
     }
 
     function handleError(error) {

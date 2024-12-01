@@ -1,4 +1,7 @@
 import math
+import base64
+import numpy as np
+import cv2
 
 from sensor_msgs.msg import TimeReference
 from sensor_msgs.msg import Imu
@@ -126,3 +129,17 @@ def data_to_gnss_msgs(data, frame_id, source):
     time.source = source
 
     return fix, time
+
+def data_to_image_msg(data, bridge, frame_id, ros_time):
+    """Convert base64 image data to ROS Image message"""
+    # Decode base64 image
+    img_data = base64.b64decode(data["video_frame"].split(',')[1])
+    # Convert to numpy array
+    nparr = np.frombuffer(img_data, np.uint8)
+    # Decode image
+    frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    # Convert to ROS Image message
+    img_msg = bridge.cv2_to_imgmsg(frame, encoding="bgr8")
+    img_msg.header.stamp = ros_time
+    img_msg.header.frame_id = frame_id
+    return img_msg
