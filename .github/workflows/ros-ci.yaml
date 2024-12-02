@@ -1,39 +1,24 @@
 name: Build packages
 on: [push]
 jobs:
-  humble:
-    runs-on: ubuntu-latest
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            distro: humble
+          - os: ubuntu-24.04
+            distro: jazzy
+          - os: ubuntu-latest
+            distro: rolling
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: ros-tooling/setup-ros@v0.7
         with:
-          required-ros-distributions: humble
+          required-ros-distributions: ${{ matrix.distro }}
       - uses: ros-tooling/action-ros-ci@v0.3
         with:
           package-name: phone_sensors
-          target-ros2-distro: humble
-          no-symlink-install: true
-          skip-tests: true
-  jazzy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ros-tooling/setup-ros@v0.7
-        with:
-          required-ros-distributions: jazzy
-      - uses: ros-tooling/action-ros-ci@v0.3
-        with:
-          package-name: phone_sensors
-          target-ros2-distro: jazzy
-          no-symlink-install: true
-          skip-tests: true
-  rolling:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ros-tooling/setup-ros@v0.7
-        with:
-          required-ros-distributions: rolling
-      - uses: ros-tooling/action-ros-ci@v0.3
-        with:
-          package-name: phone_sensors
-          target-ros2-distro: rolling
+          target-ros2-distro: ${{ matrix.distro }}
           no-symlink-install: true
           skip-tests: true
