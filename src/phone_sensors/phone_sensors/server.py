@@ -207,6 +207,7 @@ class ServerApp:
             debug=self.node.debug_param.value,
             use_reloader=False,
             ssl_context="adhoc",
+            allow_unsafe_werkzeug=True,
         )
 
 
