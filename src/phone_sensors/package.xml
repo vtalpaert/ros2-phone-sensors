@@ -9,7 +9,9 @@
 
   <depend>sensor_msgs</depend>
   <depend>cv_bridge</depend>
+  <depend>python3-numpy</depend>
   <depend>python3-opencv</depend>
+  <depend>python3-flask-socketio</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

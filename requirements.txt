@@ -1,6 +1,3 @@
 flask-socketio
-flask
-pyOpenSSL  # for ssl_context="adhoc"
-opencv-python
 numpy
-robot_localization
+opencv-python
