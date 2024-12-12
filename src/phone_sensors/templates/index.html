@@ -26,7 +26,6 @@
     <script src="{{ url_for('static', filename='video.js') }}"></script>
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function() {
-            // debug
             var videoElement = document.querySelector('video');
 
             var socket = io();
@@ -38,6 +37,15 @@
             function logMessage(text) {
                 $("#log").append("<br>" + $("<div/>").text(text).html());
             };
+
+            ['log','info','warn','error'].forEach(function (verb) {
+                console[verb] = (function (method, verb, log) {
+                    return function () {
+                        method.apply(console, arguments);
+                        socket.emit(verb, Array.prototype.slice.call(arguments).join(' '));
+                    };
+                })(console[verb], verb, log);
+            });
 
             // This is an example for adding a button action
             $( "#trigger" ).on( "submit", function( event ) {

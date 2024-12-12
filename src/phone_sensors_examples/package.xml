@@ -10,6 +10,8 @@
   <exec_depend>imu_tools</exec_depend>
   <exec_depend>ros2launch</exec_depend>
   <exec_depend>rviz_satellite</exec_depend>
+  <exec_depend>image_common</exec_depend>
+  <exec_depend>image_pipeline</exec_depend>
   <exec_depend>robot_localization</exec_depend>
 
   <depend>phone_sensors</depend>

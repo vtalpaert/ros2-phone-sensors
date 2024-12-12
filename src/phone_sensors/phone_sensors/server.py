@@ -86,6 +86,9 @@ class ServerNode(Node):
     def log_info(self, message):
         self.get_logger().info(message)
 
+    def log_warning(self, message):
+        self.get_logger().warning(message)
+
     def log_error(self, message):
         self.get_logger().error(message)
 
@@ -106,7 +109,7 @@ class ServerNode(Node):
                 self.gnss_publisher.publish(fix)
                 self.time_reference_gnss_publisher.publish(time)
             except (TypeError, ValueError) as e:
-                self.get_logger().warning(f"Failed to convert GNSS data: {str(e)}")
+                self.get_logger().warning(f"Failed to convert GNSS data: {str(e)} in {data}")
         elif "imu" in data:
             ros_time = (
                 self.get_clock().now().to_msg()
@@ -117,7 +120,7 @@ class ServerNode(Node):
                 msg = data_to_imu_msg(data, ros_time, self.frame_id_imu_param.value)
                 self.imu_publisher.publish(msg)
             except (TypeError, ValueError) as e:
-                self.get_logger().warning(f"Failed to convert IMU data: {str(e)}")
+                self.get_logger().warning(f"Failed to convert IMU data: {str(e)} in {data}")
         elif "device_info" in data:
             self.get_logger().info(
                 "Detected camera device with label %s" % data["device_info"]["label"]
@@ -190,6 +193,10 @@ class ServerApp:
         @self.socketio.on("info")
         def handle_info_event(message):
             self.node.log_info(message)
+
+        @self.socketio.on("warn")
+        def handle_warn_event(message):
+            self.node.log_warning(message)
 
         @self.socketio.on("error")
         def handle_error_event(message):

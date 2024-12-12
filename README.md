@@ -16,9 +16,11 @@ colcon build --packages-up-to phone_sensors
 # colcon build --symlink-install  --packages-up-to phone_sensors_examples --event-handlers console_direct+
 ```
 
-## Usage
+## `phone_sensors` usage
 
 ### Quickstart
+
+Do not run in the same terminal you built in, otherwise you might run from the `build` folder which will not contain the template folder for the webpage.
 
 ```bash
 source install/setup.bash
@@ -27,28 +29,40 @@ ros2 run phone_sensors server --ros-args -p video_width:=1280 -p video_height:=7
 
 ### Parameters
 
-| Name | Type | Default | Unit | Description |
-|------|------|---------|------|-------------|
-| `host` | string | "0.0.0.0" | IP | Use `0.0.0.0` to accept connections outside of localhost |
-| `port` | int | 2000 | | The port where the server listens on |
-| `debug` | bool | True | | Use Flask in debug mode |
-| `use_ros_time` | bool | False | | Use ROS time instead of device time for message timestamps |
-| `time_reference_source_device` | string | "ros_to_device" | | Source identifier for device TimeReference messages |
-| `time_reference_source_gnss` | string | "device_to_gnss" | | Source identifier for GNSS TimeReference messages |
-| `time_reference_frequency` | float | -1.0 | Hz | Rate to emit TimeReference data |
-| `imu_frequency` | float | 100.0 | Hz | Rate to emit IMU data |
-| `gnss_frequency` | float | 10.0 | Hz | Rate to emit GNSS data |
-| `frame_id_imu` | string | package_name | | Frame ID for IMU messages |
-| `frame_id_gnss` | string | package_name | | Frame ID for GNSS messages |
-| `frame_id_image` | string | package_name | | Frame ID for camera image messages |
-| `camera_device_label` | string | "Facing front:1" | | Label to identify which camera to use |
-| `show_video_preview` | bool | True | | Show video preview on client device |
-| `video_fps` | float | 30.0 | Hz | Video frame rate |
-| `video_width` | int | 1280 | pixels | Video frame width |
-| `video_height` | int | 720 | pixels | Video frame height |
-| `video_compression` | float | 0.3 | 0-1 | JPEG compression quality (0=max compression, 1=best quality) |
+| Name                           | Type   | Default          | Unit   | Description                                                  |
+| ------------------------------ | ------ | ---------------- | ------ | ------------------------------------------------------------ |
+| `host`                         | string | "0.0.0.0"        | IP     | Use `0.0.0.0` to accept connections outside of localhost     |
+| `port`                         | int    | 2000             |        | The port where the server listens on                         |
+| `debug`                        | bool   | True             |        | Use Flask in debug mode                                      |
+| `use_ros_time`                 | bool   | False            |        | Use ROS time instead of device time for message timestamps   |
+| `time_reference_source_device` | string | "ros_to_device"  |        | Source identifier for device TimeReference messages          |
+| `time_reference_source_gnss`   | string | "device_to_gnss" |        | Source identifier for GNSS TimeReference messages            |
+| `time_reference_frequency`     | float  | -1.0             | Hz     | Rate to emit TimeReference data                              |
+| `imu_frequency`                | float  | 100.0            | Hz     | Rate to emit IMU data                                        |
+| `gnss_frequency`               | float  | 10.0             | Hz     | Rate to emit GNSS data                                       |
+| `frame_id_imu`                 | string | package_name     |        | Frame ID for IMU messages                                    |
+| `frame_id_gnss`                | string | package_name     |        | Frame ID for GNSS messages                                   |
+| `frame_id_image`               | string | package_name     |        | Frame ID for camera image messages                           |
+| `camera_device_label`          | string | "Facing front:1" |        | Label to identify which camera to use                        |
+| `show_video_preview`           | bool   | True             |        | Show video preview on client device                          |
+| `video_fps`                    | float  | 30.0             | Hz     | Video frame rate                                             |
+| `video_width`                  | int    | 1280             | pixels | Video frame width                                            |
+| `video_height`                 | int    | 720              | pixels | Video frame height                                           |
+| `video_compression`            | float  | 0.3              | 0-1    | JPEG compression quality (0=max compression, 1=best quality) |
 
 A negative value for the time reference, IMU or GNSS frequencies will disable sending the corresponding data from the client device. This allows conserving bandwidth and processing power when certain sensors are not needed.
+
+## `phone_sensors_examples`
+
+### Camera calibration
+
+To calibrate you camera, print the [checkerboard](src/phone_sensors_examples/config/calib.io_checker_297x210_8x11_20.pdf) in maximum page size. While printing, do not adjust the size.
+
+Then run:
+
+```bash
+tar -xvf /tmp/calibrationdata.tar.gz --exclude=*.png --directory src/phone_sensors_examples/config/
+```
 
 ## TODO
 
@@ -69,3 +83,4 @@ A negative value for the time reference, IMU or GNSS frequencies will disable se
 - [ ] robot_localization example with visual inertial odometry
 - [ ] Fix issue where the video is not sent when `show_video_preview` is `False`
 - [ ] Add tests for `message_converters.py`
+- [ ] Use `/camera/image/compressed/jpeg_quality` output topic according to [image_transport](https://wiki.ros.org/image_transport)
