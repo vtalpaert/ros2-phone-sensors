@@ -79,7 +79,6 @@ class ServerNode(Node):
             TimeReference, "time/gnss", 10
         )
         self.video_publisher = self.create_publisher(Image, "camera/image_raw", 10)
-        self.camera_info_publisher = self.create_publisher(CameraInfo, "camera/camera_info", 10)
         
         # Load camera calibration if file exists
         self.camera_calibration_file = self.declare_parameter("camera_calibration_file", "").value
@@ -88,6 +87,7 @@ class ServerNode(Node):
             try:
                 self.camera_info_msg = yaml_to_camera_info(self.camera_calibration_file)
                 self.get_logger().info(f"Loaded camera calibration from {self.camera_calibration_file}")
+                self.camera_info_publisher = self.create_publisher(CameraInfo, "camera/camera_info", 10)
             except Exception as e:
                 self.get_logger().error(f"Failed to load camera calibration: {str(e)}")
 
