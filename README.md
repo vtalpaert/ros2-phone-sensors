@@ -49,6 +49,7 @@ ros2 run phone_sensors server --ros-args -p video_width:=1280 -p video_height:=7
 | `video_width`                  | int    | 1280             | pixels | Video frame width                                            |
 | `video_height`                 | int    | 720              | pixels | Video frame height                                           |
 | `video_compression`            | float  | 0.3              | 0-1    | JPEG compression quality (0=max compression, 1=best quality) |
+| `camera_calibration_file`      | string | ""               | path   | Path to camera calibration YAML file (output from camera_calibration) |
 
 A negative value for the time reference, IMU or GNSS frequencies will disable sending the corresponding data from the client device. This allows conserving bandwidth and processing power when certain sensors are not needed.
 

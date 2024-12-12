@@ -6,7 +6,7 @@ from flask_socketio import SocketIO, emit
 
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import TimeReference, Imu, NavSatFix, Image
+from sensor_msgs.msg import TimeReference, Imu, NavSatFix, Image, CameraInfo
 import cv_bridge
 
 from .message_converters import *
@@ -79,6 +79,17 @@ class ServerNode(Node):
             TimeReference, "time/gnss", 10
         )
         self.video_publisher = self.create_publisher(Image, "camera/image_raw", 10)
+        self.camera_info_publisher = self.create_publisher(CameraInfo, "camera/camera_info", 10)
+        
+        # Load camera calibration if file exists
+        self.camera_calibration_file = self.declare_parameter("camera_calibration_file", "").value
+        self.camera_info_msg = None
+        if self.camera_calibration_file and os.path.exists(self.camera_calibration_file):
+            try:
+                self.camera_info_msg = yaml_to_camera_info(self.camera_calibration_file)
+                self.get_logger().info(f"Loaded camera calibration from {self.camera_calibration_file}")
+            except Exception as e:
+                self.get_logger().error(f"Failed to load camera calibration: {str(e)}")
 
     def log_debug(self, message):
         self.get_logger().debug(message)
@@ -134,6 +145,11 @@ class ServerNode(Node):
                     self.get_clock().now().to_msg(),
                 )
                 self.video_publisher.publish(img_msg)
+                # Publish camera info with same timestamp if available
+                if self.camera_info_msg:
+                    self.camera_info_msg.header.stamp = img_msg.header.stamp
+                    self.camera_info_msg.header.frame_id = img_msg.header.frame_id
+                    self.camera_info_publisher.publish(self.camera_info_msg)
             except ValueError as e:
                 self.get_logger().warning(f"Failed to convert video frame: {str(e)}")
         else:

@@ -1,4 +1,5 @@
 import math
+import yaml
 import base64
 import numpy as np
 import cv2
@@ -135,6 +136,32 @@ def data_to_gnss_msgs(data, ros_time, frame_id, source):
     time.source = source
 
     return fix, time
+
+def yaml_to_camera_info(yaml_fname):
+    """Parse camera calibration data from a YAML file into a CameraInfo message.
+    
+    Parameters
+    ----------
+    yaml_fname : str
+        Path to YAML file containing camera calibration data
+        
+    Returns
+    -------
+    camera_info_msg : sensor_msgs.msg.CameraInfo
+        CameraInfo message containing the calibration data
+    """
+    with open(yaml_fname, "r") as f:
+        calib_data = yaml.safe_load(f)
+        
+    msg = CameraInfo()
+    msg.width = calib_data["image_width"]
+    msg.height = calib_data["image_height"]
+    msg.k = calib_data["camera_matrix"]["data"]
+    msg.d = calib_data["distortion_coefficients"]["data"]
+    msg.r = calib_data["rectification_matrix"]["data"]
+    msg.p = calib_data["projection_matrix"]["data"]
+    msg.distortion_model = calib_data["distortion_model"]
+    return msg
 
 def data_to_image_msg(data, bridge, frame_id, ros_time):
     """Convert base64 image data to ROS Image message"""
