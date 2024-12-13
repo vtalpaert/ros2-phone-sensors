@@ -1,24 +1,3 @@
-phone_sensors_server:
-  ros__parameters:
-    host: "0.0.0.0"
-    port: 2000
-    debug: false
-    use_ros_time: false
-    time_reference_source_device: "ros_to_device"
-    frame_id_imu: "base_link"
-    frame_id_gnss: "base_link"
-    frame_id_image: "base_link"
-    time_reference_source_gnss: "device_to_gnss"
-    time_reference_frequency: -1.0
-    imu_frequency: 60.0
-    gnss_frequency: 10.0
-    camera_device_label: "Facing front:1"
-    show_video_preview: false
-    video_fps: 10.0
-    video_width: 1280
-    video_height: 720
-    video_compression: 0.3
-
 navsat_transform_node:
   ros__parameters:
     frequency: 30.0
