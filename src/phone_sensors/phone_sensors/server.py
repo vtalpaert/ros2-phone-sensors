@@ -173,14 +173,16 @@ class ServerApp:
         static_folder = os.path.join(
             os.environ["COLCON_PREFIX_PATH"], package_name, "lib", "static"
         )
-        print(
-            f"Running with template folder {template_folder} and static folder {static_folder}. Async mode is {self.socketio.async_mode}"
-        )
+
         self.app = Flask(
             __name__, template_folder=template_folder, static_folder=static_folder
         )
         self.app.config["SECRET_KEY"] = self.node.secret_key_param.value
         self.socketio = SocketIO(self.app)
+
+        print(
+            f"Running with template folder {template_folder} and static folder {static_folder}. Async mode is {self.socketio.async_mode}"
+        )
 
         @self.app.route("/")
         def index():
@@ -223,6 +225,7 @@ class ServerApp:
             self.node.handle_data(data)
 
     def run(self):
+        print("staritng socketio")
         self.socketio.run(
             self.app,
             self.node.host_param.value,
@@ -232,6 +235,7 @@ class ServerApp:
             ssl_context="adhoc",
             allow_unsafe_werkzeug=True,
         )
+        print("socketio running")
 
 
 def main(args=None):
