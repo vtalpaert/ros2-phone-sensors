@@ -225,7 +225,7 @@ class ServerApp:
             self.node.handle_data(data)
 
     def run(self):
-        print("staritng socketio")
+        print("starting socketio")
         self.socketio.run(
             self.app,
             self.node.host_param.value,
