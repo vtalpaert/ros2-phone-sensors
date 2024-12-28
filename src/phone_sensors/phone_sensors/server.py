@@ -40,6 +40,7 @@ class ServerNode(Node):
         self.host_param = self.declare_parameter("host", "0.0.0.0")
         self.port_param = self.declare_parameter("port", 2000)
         self.debug_param = self.declare_parameter("debug", True)
+        self.secret_key_param = self.declare_parameter("secret_key", "secret!")
 
         self.use_ros_time_param = self.declare_parameter("use_ros_time", False)
 
@@ -173,16 +174,13 @@ class ServerApp:
             os.environ["COLCON_PREFIX_PATH"], package_name, "lib", "static"
         )
         print(
-            "Running with template folder %s and static folder %s"
-            % (template_folder, static_folder)
+            f"Running with template folder {template_folder} and static folder {static_folder}. Async mode is {self.socketio.async_mode}"
         )
         self.app = Flask(
             __name__, template_folder=template_folder, static_folder=static_folder
         )
-        self.app.config["SECRET_KEY"] = "secret!"
+        self.app.config["SECRET_KEY"] = self.node.secret_key_param.value
         self.socketio = SocketIO(self.app)
-
-        print(f"Running in async_mode {self.socketio.async_mode}")
 
         @self.app.route("/")
         def index():

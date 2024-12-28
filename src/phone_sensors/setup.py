@@ -14,7 +14,7 @@ setup(
         (os.path.join("lib", "templates"), glob("templates/*.html")),
         (os.path.join("lib", "static"), glob("templates/static/*.js") + glob("templates/static/*.css")),
     ],
-    install_requires=["setuptools"],
+    install_requires=["setuptools", "flask-socketio", "gevent-websocket", "numpy", "opencv-python"],
     zip_safe=True,
     maintainer="victor",
     maintainer_email="victor.talpaert@gmail.com",
