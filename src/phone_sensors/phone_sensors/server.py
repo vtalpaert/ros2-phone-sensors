@@ -182,6 +182,8 @@ class ServerApp:
         self.app.config["SECRET_KEY"] = "secret!"
         self.socketio = SocketIO(self.app)
 
+        print(f"Running in async_mode {self.socketio.async_mode}")
+
         @self.app.route("/")
         def index():
             return render_template(
