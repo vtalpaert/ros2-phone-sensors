@@ -17,23 +17,20 @@ function registerGpsPublisher(socket, window) {
         socket.emit("error", error.message);
     }
 
-    function gnssSendData(position) {
-        navigator.geolocation.getCurrentPosition(success, error, options);
-    }
-
-    var gnssLoop = 0;
+    var watchId = 0;
     function gnssStartSending(sendInterval) {
         if (window.geolocation_permission_granted) {
-            socket.emit("info", "Sending gnss with interval " + sendInterval + " ms");
-            gnssLoop = setInterval(gnssSendData, sendInterval);
+            socket.emit("info", "Starting GNSS watch");
+            watchId = navigator.geolocation.watchPosition(success, error, options);
         } else {
             socket.emit("error", "Cannot start GNSS: geolocation permission not granted. Retrying in 1 second...");
             setTimeout(() => gnssStartSending(sendInterval), 1000);
         }
     };
     function gnssStopSending() {
-        if (gnssLoop != 0) {
-            clearInterval(gnssLoop);
+        if (watchId != 0) {
+            navigator.geolocation.clearWatch(watchId);
+            watchId = 0;
         }
         socket.sendBuffer = [];  // empty buffer to stop sending
     };
