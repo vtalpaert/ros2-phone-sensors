@@ -2,7 +2,7 @@ function registerGpsPublisher(socket, window) {
     window.geolocation_permission_granted = false;
     const options = {
         enableHighAccuracy: true,
-        maximumAge: 1000,
+        maximumAge: 100,
         timeout: 1000,
     };
 
