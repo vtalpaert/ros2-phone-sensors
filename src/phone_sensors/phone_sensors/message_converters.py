@@ -113,6 +113,8 @@ def data_to_gnss_msgs(data, ros_time, frame_id, source):
     # Handle None altitude by defaulting to 0
     altitude = data["gnss"]["coords"]["altitude"]
     fix.altitude = float(altitude) if altitude is not None else 0.0
+    altitude_accuracy = data["gnss"]["coords"]["altitudeAccuracy"]
+    altitude_accuracy = float(altitude_accuracy) if altitude_accuracy is not None else 0.0
     fix.position_covariance = (
         float(data["gnss"]["coords"]["accuracy"]),
         0.0,
@@ -122,7 +124,7 @@ def data_to_gnss_msgs(data, ros_time, frame_id, source):
         0.0,
         0.0,
         0.0,
-        float(data["gnss"]["coords"]["altitudeAccuracy"]),
+        altitude_accuracy,
     )
     fix.position_covariance_type = NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN
 

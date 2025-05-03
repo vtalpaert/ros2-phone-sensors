@@ -3,6 +3,9 @@ phone_sensors_server:
     host: "0.0.0.0"
     port: 2000
     debug: false
+    secret_key: "secret!"
+    ssl_certificate: "certs/certificate.crt"
+    ssl_private_key: "certs/private.key"
     use_ros_time: false
     time_reference_source_device: "ros_to_device"
     frame_id_imu: "base_link"

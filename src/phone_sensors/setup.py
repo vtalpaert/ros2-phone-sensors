@@ -24,4 +24,5 @@ setup(
     entry_points={
         "console_scripts": ["server = phone_sensors.server:main"],
     },
+    scripts=["scripts/generate_dev_certificates.sh"],
 )

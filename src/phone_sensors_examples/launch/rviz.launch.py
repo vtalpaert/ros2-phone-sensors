@@ -24,6 +24,7 @@ def generate_launch_description():
                 executable="server",
                 name="phone_sensors_server",
                 output="screen",
+                emulate_tty=True,
                 parameters=[
                     server_config_file,
                     {

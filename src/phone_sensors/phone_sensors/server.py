@@ -41,6 +41,8 @@ class ServerNode(Node):
         self.port_param = self.declare_parameter("port", 2000)
         self.debug_param = self.declare_parameter("debug", True)
         self.secret_key_param = self.declare_parameter("secret_key", "secret!")
+        self.ssl_certificate_param = self.declare_parameter("ssl_certificate", "certs/certificate.crt")
+        self.ssl_private_key_param = self.declare_parameter("ssl_private_key", "certs/private.key")
 
         self.use_ros_time_param = self.declare_parameter("use_ros_time", False)
 
@@ -225,17 +227,19 @@ class ServerApp:
             self.node.handle_data(data)
 
     def run(self):
-        print("starting socketio")
-        self.socketio.run(
-            self.app,
-            self.node.host_param.value,
-            self.node.port_param.value,
-            debug=self.node.debug_param.value,
-            use_reloader=False,
-            ssl_context="adhoc",
-            allow_unsafe_werkzeug=True,
-        )
-        print("socketio running")
+        if not os.path.exists(self.node.ssl_certificate_param.value) \
+                or not os.path.exists(self.node.ssl_private_key_param.value):
+            print("Missing SSL certificates")
+        else:
+            self.socketio.run(
+                self.app,
+                self.node.host_param.value,
+                self.node.port_param.value,
+                debug=self.node.debug_param.value,
+                use_reloader=False,
+                certfile=self.node.ssl_certificate_param.value,
+                keyfile=self.node.ssl_private_key_param.value,
+            )
 
 
 def main(args=None):

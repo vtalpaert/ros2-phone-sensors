@@ -24,6 +24,14 @@ Do not run in the same terminal you built in, otherwise you might run from the `
 
 ```bash
 source install/setup.bash
+
+# Ubuntu IP
+EXTRA_IP=$(ip route get 8.8.8.8 | grep -oP 'src \K[^ ]+')
+echo "My IP is $EXTRA_IP"
+# Generate SSL certificates for local webserver 
+ros2 run phone_sensors generate_dev_certificates.sh $EXTRA_IP
+
+# Start server
 ros2 run phone_sensors server --ros-args -p video_width:=1280 -p video_height:=720
 ```
 
@@ -34,6 +42,9 @@ ros2 run phone_sensors server --ros-args -p video_width:=1280 -p video_height:=7
 | `host`                         | string | "0.0.0.0"        | IP     | Use `0.0.0.0` to accept connections outside of localhost     |
 | `port`                         | int    | 2000             |        | The port where the server listens on                         |
 | `debug`                        | bool   | True             |        | Use Flask in debug mode                                      |
+| `secret_key`                   | string | "secret!"        |        | Flask SECRET_KEY                                             |
+| `ssl_certificate`              | string | "certs/certificate.crt" | path | Path to public SSL certificate                          |
+| `ssl_private_key`              | string | "certs/private.key" | path | Path to private SSL key                                     |
 | `use_ros_time`                 | bool   | False            |        | Use ROS time instead of device time for message timestamps   |
 | `time_reference_source_device` | string | "ros_to_device"  |        | Source identifier for device TimeReference messages          |
 | `time_reference_source_gnss`   | string | "device_to_gnss" |        | Source identifier for GNSS TimeReference messages            |
@@ -59,10 +70,21 @@ A negative value for the time reference, IMU or GNSS frequencies will disable se
 
 To calibrate you camera, print the [checkerboard](src/phone_sensors_examples/config/calib.io_checker_297x210_8x11_20.pdf) in maximum page size. While printing, do not adjust the size.
 
-Then run:
-
 ```bash
+# Calibrate camera using GUI
+source install/setup.bash
+ros2 launch phone_sensors_examples calibrate.launch.py
+
+# Generate SSL certificates for local webserver 
+#ros2 run phone_sensors generate_dev_certificates.sh $(ip route get 8.8.8.8 | grep -oP 'src \K[^ ]+')
+
+# Extract the calibration so that launch files will know where to look
 tar -xvf /tmp/calibrationdata.tar.gz --exclude=*.png --directory src/phone_sensors_examples/config/
+# Server, image rectification, RVIZ
+ros2 launch phone_sensors_examples rviz.launch.py
+
+# Start only the node
+#ros2 run phone_sensors server --ros-args -p camera_calibration_file:=src/phone_sensors_examples/config/ost.yaml
 ```
 
 ## TODO
@@ -74,8 +96,8 @@ tar -xvf /tmp/calibrationdata.tar.gz --exclude=*.png --directory src/phone_senso
 - [x] Publish [IMU](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Imu.html)
 - [x] Publish [GPS (NavSatFix)](https://docs.ros2.org/foxy/api/sensor_msgs/msg/NavSatFix.html)
 - [ ] If GeoLocation provides speed and heading, publish an Odometry message
-- [ ] Calibrate camera in examples package
-- [ ] Publish [CameraInfo](https://docs.ros2.org/foxy/api/sensor_msgs/msg/CameraInfo.html)
+- [x] Calibrate camera in examples package
+- [x] Publish [CameraInfo](https://docs.ros2.org/foxy/api/sensor_msgs/msg/CameraInfo.html)
 - [x] Publish [video stream (Image)](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Image.html)
 - [ ] Publish orientation as a [Quaternion](http://docs.ros.org/en/api/geometry_msgs/html/msg/Quaternion.html) or [Odometry](http://docs.ros.org/en/api/nav_msgs/html/msg/Odometry.html)
 - [ ] Add [Serial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) or Bluetooth, as a possible way for the phone to send data over USB to a microcontroller
@@ -85,3 +107,4 @@ tar -xvf /tmp/calibrationdata.tar.gz --exclude=*.png --directory src/phone_senso
 - [ ] Fix issue where the video is not sent when `show_video_preview` is `False`
 - [ ] Add tests for `message_converters.py`
 - [ ] Use `/camera/image/compressed/jpeg_quality` output topic according to [image_transport](https://wiki.ros.org/image_transport)
+- [ ] Use SocketIO namespaces to separate video and other data

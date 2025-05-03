@@ -1,4 +1,5 @@
 build/
+certs/
 install/
 log/
 __pycache__
