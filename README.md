@@ -35,7 +35,7 @@ ros2 run phone_sensors generate_dev_certificates.sh $EXTRA_IP
 ros2 run phone_sensors server --ros-args -p video_width:=1280 -p video_height:=720
 ```
 
-Open the webpage from your mobile device. The URL depends on your network, but most likely is `https://<EXTRA_IP>:2000`.
+Open the webpage from your mobile device. The URL contains the server host IP where the node is running. It depends on your network, but most likely is `https://<EXTRA_IP>:2000`.
 If you have multiple network interfaces, favour the fastest such as ethernet over wifi.
 
 The page will prompt for permissions, then display the chosen camera
