@@ -35,6 +35,14 @@ ros2 run phone_sensors generate_dev_certificates.sh $EXTRA_IP
 ros2 run phone_sensors server --ros-args -p video_width:=1280 -p video_height:=720
 ```
 
+Open the webpage from your mobile device. The URL depends on your network, but most likely is `https://<EXTRA_IP>:2000`.
+If you have multiple network interfaces, favour the fasters such as ethernet over wifi.
+
+The page will prompt for permissions, then display the chosen camera
+<p align="center">
+    <img src="docs/webpage_firefox_front_cam.jpg" alt="webpage with firefox" width="50%" height="auto">
+</p>
+
 ### Parameters
 
 | Name                           | Type   | Default          | Unit   | Description                                                  |
@@ -64,9 +72,14 @@ ros2 run phone_sensors server --ros-args -p video_width:=1280 -p video_height:=7
 
 A negative value for the time reference, IMU or GNSS frequencies will disable sending the corresponding data from the client device. This allows conserving bandwidth and processing power when certain sensors are not needed.
 
+To find out the available `camera_device_label`, open the video test page
+<p align="center">
+    <img src="docs/webpage_firefox_test_video.jpg" alt="Video test page" width="50%" height="auto">
+</p>
+
 ## `phone_sensors_examples`
 
-### Camera calibration
+### Camera calibration & RVIZ
 
 To calibrate you camera, print the [checkerboard](src/phone_sensors_examples/config/calib.io_checker_297x210_8x11_20.pdf) in maximum page size. While printing, do not adjust the size.
 
@@ -87,9 +100,11 @@ ros2 launch phone_sensors_examples rviz.launch.py
 #ros2 run phone_sensors server --ros-args -p camera_calibration_file:=src/phone_sensors_examples/config/ost.yaml
 ```
 
+![RVIZ example](docs/rviz_example.png)
+
 ## TODO
 
-- [ ] Explain usage with images and how the browser side behaves (in particular permissions)
+- [x] Explain usage with images and how the browser side behaves (in particular permissions)
 - [ ] Test with different browsers (I am looking for testers though !)
 - [ ] Document server files
 - [x] Publish [TimeReference](https://docs.ros2.org/foxy/api/sensor_msgs/msg/TimeReference.html)
