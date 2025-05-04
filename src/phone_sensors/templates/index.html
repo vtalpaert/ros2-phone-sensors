@@ -22,7 +22,7 @@
 
     <script src="{{ url_for('static', filename='time_reference.js') }}"></script>
     <script src="{{ url_for('static', filename='device_motion_orientation.js') }}"></script>
-    <script src="{{ url_for('static', filename='gnss.js') }}"></script>
+    <script src="{{ url_for('static', filename='geolocation.js') }}"></script>
     <script src="{{ url_for('static', filename='video.js') }}"></script>
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function() {
@@ -31,7 +31,7 @@
             var socket = io();
             registerTimeReferencePublisher(socket); // from time_reference.js
             registerDeviceMotionOrientationPublisher(socket, window); // from device_motion_orientation.js
-            registerGpsPublisher(socket, window); // from gnss.js
+            registerGeolocationPublisher(socket, window); // from geolocation.js
             registerVideoFunctions(socket, window, videoElement); // from video.js
 
             function logMessage(text) {

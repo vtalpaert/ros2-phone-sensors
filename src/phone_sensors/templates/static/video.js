@@ -1,32 +1,28 @@
 function registerVideoFunctions(socket, window, videoElement) {
     var videoSource;
     var videoLabel;
-    
-    socket.on("show_video_preview", function(value) {
-        window.showVideoPreview = value;
-        socket.emit("info", "Video preview setting: " + value);
-    });
+    var captureLoop = 0;
 
-    socket.on("video_fps", function(value) {
+    socket.on("video_fps", function (value) {
         window.videoFps = value;
         socket.emit("info", "Video FPS setting: " + value);
     });
 
-    socket.on("video_width", function(value) {
+    socket.on("video_width", function (value) {
         window.videoWidth = value;
         socket.emit("info", "Video width setting: " + value);
     });
 
-    socket.on("video_height", function(value) {
+    socket.on("video_height", function (value) {
         window.videoHeight = value;
         socket.emit("info", "Video height setting: " + value);
     });
 
-    socket.on("video_compression", function(value) {
+    socket.on("video_compression", function (value) {
         window.videoCompression = value;
         socket.emit("info", "Video compression setting: " + value);
     });
-    
+
     function getDevices() {
         return navigator.mediaDevices.enumerateDevices();
     }
@@ -56,28 +52,32 @@ function registerVideoFunctions(socket, window, videoElement) {
                 });
                 // Add delay after stopping tracks
                 setTimeout(() => {
-                    const constraints = {
-                        video: {
-                            deviceId: videoSource ? {exact: videoSource} : undefined,
-                            // Note: width/height are in landscape orientation
-                            width: { ideal: window.videoWidth || 1280 },  // horizontal resolution
-                            height: { ideal: window.videoHeight || 720 }  // vertical resolution
-                        }
-                    };
-                    socket.emit("info", "Opening stream with constraints " + JSON.stringify(constraints));
-                    navigator.mediaDevices.getUserMedia(constraints)
-                        .then(gotStream)
-                        .then(resolve)
-                        .catch(error => {
-                            handleError(error);
-                            reject(error);
-                        });
+                    if (!videoSource) {
+                        socket.emit("error", "No available label to match the required " + videoLabel);
+                    } else {
+                        const constraints = {
+                            video: {
+                                deviceId: { exact: videoSource },
+                                // Note: width/height are in landscape orientation
+                                width: { ideal: window.videoWidth || 1280 },  // horizontal resolution
+                                height: { ideal: window.videoHeight || 720 }  // vertical resolution
+                            }
+                        };
+                        socket.emit("info", "Opening stream " + videoLabel + " with constraints " + JSON.stringify(constraints));
+                        navigator.mediaDevices.getUserMedia(constraints)
+                            .then(gotStream)
+                            .then(resolve)
+                            .catch(error => {
+                                handleError(error);
+                                reject(error);
+                            });
+                    }
                 }, 500); // 500ms delay before starting new stream
             } else {
                 const constraints = {
-                    video: {deviceId: videoSource ? {exact: videoSource} : undefined}
+                    video: { deviceId: videoSource ? { exact: videoSource } : undefined }
                 };
-                socket.emit("info", "Opening initial stream with constraints " + JSON.stringify(constraints));
+                socket.emit("info", "Opening initial stream to detect all existing labels with constraints " + JSON.stringify(constraints));
                 navigator.mediaDevices.getUserMedia(constraints)
                     .then(gotStream)
                     .then(resolve)
@@ -96,35 +96,42 @@ function registerVideoFunctions(socket, window, videoElement) {
             window.firstStreamOpened = true;
             videoElement.style.display = 'none';
         } else {
-            if (window.showVideoPreview) {
+            if (window.videoFps > 0) {
                 videoElement.style.display = 'block';
                 videoElement.srcObject = stream;
+
+                // Create canvas for frame capture
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+
+                // Set capture interval based on FPS parameter
+                const interval = Math.floor(1000 / (window.videoFps || 30));
+                if (captureLoop !== 0) {
+                    clearInterval(captureLoop);
+                    captureLoop = 0;
+                }
+                captureLoop = setInterval(() => {
+                    canvas.width = videoElement.videoWidth;
+                    canvas.height = videoElement.videoHeight;
+                    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+                    // Only send if frame is not empty
+                    if (canvas.width > 0 && canvas.height > 0) {
+                        // Convert to base64 and send through websocket
+                        const frame = canvas.toDataURL('image/jpeg', window.videoCompression || 0.7);
+                        socket.emit("data", {
+                            date_ms: Date.now(),
+                            video_frame: frame
+                        });
+                    }
+                }, interval);
+                socket.emit("info", "Video effective interval (ms): " + interval);
             } else {
                 videoElement.style.display = 'none';
             }
         }
-        
-        // Create canvas for frame capture
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        
-        // Set capture interval based on FPS parameter
-        const interval = Math.floor(1000 / (window.videoFps || 30));
-        const captureLoop = setInterval(() => {
-            canvas.width = videoElement.videoWidth;
-            canvas.height = videoElement.videoHeight;
-            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-            
-            // Only send if frame is not empty
-            if (canvas.width > 0 && canvas.height > 0) {
-                // Convert to base64 and send through websocket
-                const frame = canvas.toDataURL('image/jpeg', window.videoCompression || 0.7);
-                socket.emit("data", {
-                    date_ms: Date.now(),
-                    video_frame: frame
-                });
-            }
-        }, interval);
+
+
     }
 
     function handleError(error) {
@@ -136,7 +143,7 @@ function registerVideoFunctions(socket, window, videoElement) {
         getStream().then(getDevices).then(gotDevices);
     }
 
-    socket.on("camera_device_label", function(label, cb) {
+    socket.on("camera_device_label", function (label, cb) {
         socket.emit("info", "You selected device with label " + label)
         videoLabel = label;
         // Initial delay to ensure we receive parameters

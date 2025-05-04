@@ -1,4 +1,4 @@
-function registerGpsPublisher(socket, window) {
+function registerGeolocationPublisher(socket, window) {
     window.geolocation_permission_granted = false;
     const options = {
         enableHighAccuracy: true,
@@ -6,10 +6,10 @@ function registerGpsPublisher(socket, window) {
         timeout: 1000,
     };
 
-    function success(position) {
+    function success(geolocation) {
         socket.emit("data", {
             date_ms: Date.now(),
-            gnss: position.toJSON()
+            loc: geolocation.toJSON()
         });
     }
 
@@ -18,16 +18,16 @@ function registerGpsPublisher(socket, window) {
     }
 
     var watchId = 0;
-    function gnssStartSending(sendInterval) {
+    function geolocationStartSending(sendInterval) {
         if (window.geolocation_permission_granted) {
             socket.emit("info", "Starting GNSS watch");
             watchId = navigator.geolocation.watchPosition(success, error, options);
         } else {
             socket.emit("error", "Cannot start GNSS: geolocation permission not granted. Retrying in 1 second...");
-            setTimeout(() => gnssStartSending(sendInterval), 1000);
+            setTimeout(() => geolocationStartSending(sendInterval), 1000);
         }
     };
-    function gnssStopSending() {
+    function geolocationStopSending() {
         if (watchId != 0) {
             navigator.geolocation.clearWatch(watchId);
             watchId = 0;
@@ -35,11 +35,11 @@ function registerGpsPublisher(socket, window) {
         socket.sendBuffer = [];  // empty buffer to stop sending
     };
 
-    socket.on("gnss_frequency", function(value, cb) {
-        gnssStopSending();
+    socket.on("gnss_frequency", function (value, cb) {
+        geolocationStopSending();
         if (value > 0) {
             const interval = Math.floor(1000 / value);  // convert Hz to ms
-            gnssStartSending(interval);
+            geolocationStartSending(interval);
         }
     });
 }

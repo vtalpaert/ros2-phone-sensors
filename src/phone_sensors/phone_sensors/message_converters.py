@@ -58,11 +58,11 @@ def data_to_time_reference_msg(data, ros_time, source):
 
 
 def data_to_imu_msg(data, ros_time, frame_id):
-    # Typical input {'date_ms': 1732380161741,
-    # 'motion': {'ax': 0.5315127968788147, 'ay': 4.6950297355651855, 'az': 8.413225173950195,
-    # 'gx': 5.914999961853027, 'gy': 3.325000047683716, 'gz': 2.0300002098083496,
-    # 'ox': 28.488818648731325, 'oy': -3.708893076611099, 'oz': 108.19609673425123,
-    # 'motion_interval_ms': 100, 'absolute': True}}
+    # Typical input {'date_ms': 1746375486895,
+    # 'motion': {'ax': 0.44434577226638794, 'ay': -0.5894360542297363, 'az': 2.010622024536133,
+    # 'rb': 13.755000114440918, 'rg': 20.96500015258789, 'ra': -55.05500030517578,
+    # 'ob': 33.10600160962329, 'og': -5.509307511590301, 'oa': 101.09377997193032,
+    # 'im': 100, 'abs': True}}
     msg = Imu()
     # Here we have access to the refresh interval for device motion,
     # it may be used to estimate the delay, or "how old" is the motion data
@@ -118,17 +118,19 @@ def data_to_imu_msg(data, ros_time, frame_id):
 
 def data_to_gnss_msgs(data, ros_time, frame_id, source):
     # Typical input with low accuracy {'date_ms': 1732386620779,
-    # 'gnss': {'coords': {'latitude': 48.8868302, 'longitude': 2.3602171, 'altitude': 95.30000305175781,
+    # 'loc': {'coords': {'latitude': 48.88xxxxx, 'longitude': 2.36xxxxx, 'altitude': 95.30000305175781,
     # 'accuracy': 100, 'altitudeAccuracy': 100,
     # 'heading': None, 'speed': None},
     # 'timestamp': 1732386620774}}
 
     fix = NavSatFix()
-    # header.stamp specifies the "ROS" time for this measurement (the
-    # corresponding satellite time may be reported using the
-    # sensor_msgs/TimeReference message).
+    # From the documentation, header.stamp specifies the "ROS" time for this measurement
+    # (the corresponding satellite time may be reported using the sensor_msgs/TimeReference message)
+    # In our case, mobile phones are synchronised to the millisecond. So we want to
+    # report on the precise timestamp at which the geolocation is measured
+    # This behaviour is overwritten with use_ros_time parameter
     if not ros_time:
-        sec, nanosec = millisec_to_sec_nanosec(data["date_ms"])
+        sec, nanosec = millisec_to_sec_nanosec(data["loc"]["timestamp"])
         fix.header.stamp.sec = sec
         fix.header.stamp.nanosec = nanosec
     else:
@@ -136,21 +138,21 @@ def data_to_gnss_msgs(data, ros_time, frame_id, source):
     fix.header.frame_id = frame_id
     fix.status.status = NavSatStatus.STATUS_FIX  # unaugmented fix
     fix.status.service = 0  # unknown
-    fix.latitude = float(data["gnss"]["coords"]["latitude"])
-    fix.longitude = float(data["gnss"]["coords"]["longitude"])
+    fix.latitude = float(data["loc"]["coords"]["latitude"])
+    fix.longitude = float(data["loc"]["coords"]["longitude"])
     # Handle None altitude by defaulting to 0
-    altitude = data["gnss"]["coords"]["altitude"]
+    altitude = data["loc"]["coords"]["altitude"]
     fix.altitude = float(altitude) if altitude is not None else 0.0
-    altitude_accuracy = data["gnss"]["coords"]["altitudeAccuracy"]
+    altitude_accuracy = data["loc"]["coords"]["altitudeAccuracy"]
     altitude_accuracy = (
         float(altitude_accuracy) if altitude_accuracy is not None else 0.0
     )
     fix.position_covariance = (
-        float(data["gnss"]["coords"]["accuracy"]),
+        float(data["loc"]["coords"]["accuracy"]),
         0.0,
         0.0,
         0.0,
-        float(data["gnss"]["coords"]["accuracy"]),
+        float(data["loc"]["coords"]["accuracy"]),
         0.0,
         0.0,
         0.0,
@@ -163,11 +165,13 @@ def data_to_gnss_msgs(data, ros_time, frame_id, source):
     # (ENU is the normal use in robotics)
     # https://developer.mozilla.org/en-US/docs/Web/API/GeolocationCoordinates
 
+    # Report the time difference between the device time and device GNSS timestamp
+    # or the device time to ROS time
     time = TimeReference()
-    time.header.stamp = fix.header.stamp
-    ts_sec, ts_nanosec = millisec_to_sec_nanosec(data["gnss"]["timestamp"])
-    time.time_ref.sec = ts_sec
-    time.time_ref.nanosec = ts_nanosec
+    sec, nanosec = millisec_to_sec_nanosec(data["date_ms"])
+    time.header.stamp.sec = sec
+    time.header.stamp.nanosec = nanosec
+    time.time_ref = fix.header.stamp
     time.source = source
 
     return fix, time

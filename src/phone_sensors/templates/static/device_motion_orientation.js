@@ -31,7 +31,7 @@ function registerDeviceMotionOrientationPublisher(socket, window) {
         }
         rotation_alpha = event.rotationRate.alpha
         rotation_beta = event.rotationRate.beta
-        rotation_gamma = event.rotationRate.gamma 
+        rotation_gamma = event.rotationRate.gamma
         motion_interval_ms = event.interval
     }
 
@@ -88,7 +88,7 @@ function registerDeviceMotionOrientationPublisher(socket, window) {
         socket.sendBuffer = [];  // empty buffer to stop sending
     };
 
-    socket.on("imu_frequency", function(value, cb) {
+    socket.on("imu_frequency", function (value, cb) {
         deviceMotionOrientationStopSending();
         if (value > 0) {
             const interval = Math.floor(1000 / value);  // convert Hz to ms
