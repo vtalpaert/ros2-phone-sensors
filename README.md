@@ -20,7 +20,7 @@ colcon build --packages-up-to phone_sensors
 
 ### Quickstart
 
-Do not run in the same terminal you built in, otherwise you might run from the `build` folder which will not contain the template folder for the webpage.
+Run the following in a different terminal than the one used for building, otherwise the server might start from inside the `build` folder which will not contain the template and static folders for the webpage.
 
 ```bash
 source install/setup.bash
@@ -76,6 +76,16 @@ To find out the available `camera_device_label`, open the video test page
 <p align="center">
     <img src="docs/webpage_firefox_test_video.jpg" alt="Video test page" width="50%" height="auto">
 </p>
+
+### Coordinates
+
+The device rotation rate and acceleration are defined in the device coordinate frame:
+<p align="center">
+    <img src="https://developer.mozilla.org/en-US/docs/Web/API/Device_orientation_events/Orientation_and_motion_data_explained/axes.png" alt="Device coordinate frame" width="50%" height="auto">
+</p>
+
+The device orientation is defined in ENU. The angles alpha, beta, gamma we get from the web API are the respective rotations around Z, X, Y.
+We convert these angles to quaternion by using beta as roll, gamma as pitch, alpha as yaw. The behaviour of a device with its Y-axis pointing up is unstable since the API is only defined between -90° to +90°. See the [web API documentation](https://developer.mozilla.org/en-US/docs/Web/API/Window/deviceorientationabsolute_event) for more details.
 
 ## `phone_sensors_examples`
 

@@ -107,6 +107,10 @@ class ServerNode(Node):
         self.get_logger().error(message)
 
     def handle_data(self, data):
+        if "video_frame" not in data:
+            self.log_debug(str(data))
+        # currently there is no message that includes several sensors at the same time,
+        # so an if-else logic is sufficient
         if "gnss" in data:
             ros_time = (
                 self.get_clock().now().to_msg()
@@ -124,7 +128,7 @@ class ServerNode(Node):
                 self.time_reference_gnss_publisher.publish(time)
             except (TypeError, ValueError) as e:
                 self.get_logger().warning(f"Failed to convert GNSS data: {str(e)} in {data}")
-        elif "imu" in data:
+        elif "motion" in data:
             ros_time = (
                 self.get_clock().now().to_msg()
                 if self.use_ros_time_param.value

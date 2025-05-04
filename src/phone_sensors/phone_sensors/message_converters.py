@@ -18,24 +18,32 @@ def millisec_to_sec_nanosec(ms):
     return sec, nanosec
 
 
-def euler_to_quaternion(roll, pitch, yaw):
-    # Don't import numpy just for this
-    roll = math.radians(roll)
-    pitch = math.radians(pitch)
-    yaw = math.radians(yaw)
-    qx = math.sin(roll / 2) * math.cos(pitch / 2) * math.cos(yaw / 2) - math.cos(
+def get_quaternion_from_euler(roll, pitch, yaw):
+    """
+    Convert an Euler angle to a quaternion.
+    Author: AutomaticAddison.com
+
+    Input
+        :param roll: The roll (rotation around x-axis) angle in radians.
+        :param pitch: The pitch (rotation around y-axis) angle in radians.
+        :param yaw: The yaw (rotation around z-axis) angle in radians.
+
+    Output
+        :return qx, qy, qz, qw: The orientation in quaternion [x,y,z,w] format
+    """
+    qx = np.sin(roll / 2) * np.cos(pitch / 2) * np.cos(yaw / 2) - np.cos(
         roll / 2
-    ) * math.sin(pitch / 2) * math.sin(yaw / 2)
-    qy = math.cos(roll / 2) * math.sin(pitch / 2) * math.cos(yaw / 2) + math.sin(
+    ) * np.sin(pitch / 2) * np.sin(yaw / 2)
+    qy = np.cos(roll / 2) * np.sin(pitch / 2) * np.cos(yaw / 2) + np.sin(
         roll / 2
-    ) * math.cos(pitch / 2) * math.sin(yaw / 2)
-    qz = math.cos(roll / 2) * math.cos(pitch / 2) * math.sin(yaw / 2) - math.sin(
+    ) * np.cos(pitch / 2) * np.sin(yaw / 2)
+    qz = np.cos(roll / 2) * np.cos(pitch / 2) * np.sin(yaw / 2) - np.sin(
         roll / 2
-    ) * math.sin(pitch / 2) * math.cos(yaw / 2)
-    qw = math.cos(roll / 2) * math.cos(pitch / 2) * math.cos(yaw / 2) + math.sin(
+    ) * np.sin(pitch / 2) * np.cos(yaw / 2)
+    qw = np.cos(roll / 2) * np.cos(pitch / 2) * np.cos(yaw / 2) + np.sin(
         roll / 2
-    ) * math.sin(pitch / 2) * math.sin(yaw / 2)
-    return qx, qy, qz, qw
+    ) * np.sin(pitch / 2) * np.sin(yaw / 2)
+    return [qx, qy, qz, qw]
 
 
 def data_to_time_reference_msg(data, ros_time, source):
@@ -51,39 +59,59 @@ def data_to_time_reference_msg(data, ros_time, source):
 
 def data_to_imu_msg(data, ros_time, frame_id):
     # Typical input {'date_ms': 1732380161741,
-    # 'imu': {'ax': 0.5315127968788147, 'ay': 4.6950297355651855, 'az': 8.413225173950195,
+    # 'motion': {'ax': 0.5315127968788147, 'ay': 4.6950297355651855, 'az': 8.413225173950195,
     # 'gx': 5.914999961853027, 'gy': 3.325000047683716, 'gz': 2.0300002098083496,
     # 'ox': 28.488818648731325, 'oy': -3.708893076611099, 'oz': 108.19609673425123,
     # 'motion_interval_ms': 100, 'absolute': True}}
     msg = Imu()
-    # Here we will assume the motion delay applies to orientation delay
-    # Note that on the client side, motion and orientation are handled separately
-    delay_ms = data["imu"]["motion_interval_ms"]
+    # Here we have access to the refresh interval for device motion,
+    # it may be used to estimate the delay, or "how old" is the motion data
+    # Note that on the client side, motion and orientation are handled separately,
+    # so the motion delay is not equal to the orientation delay
+    # _motion_interval_ms = data["motion"]["im"]
     if not ros_time:
-        sec, nanosec = millisec_to_sec_nanosec(data["date_ms"] - delay_ms)
+        # Using data["date_ms"] - _motion_interval_ms is possible for precision
+        # but it needs to be tested. Indeed there is no guarantee that the refresh
+        # rate is equal to the delay
+        sec, nanosec = millisec_to_sec_nanosec(data["date_ms"])
         msg.header.stamp.sec = sec
         msg.header.stamp.nanosec = nanosec
     else:
         msg.header.stamp = ros_time
     msg.header.frame_id = frame_id
-    _is_absolute = data["imu"]["absolute"]
-    # Here the interpretation of axis is dependant on both the device
-    # but also the use case. Re-orientation should be handled in your tf tree
-    qx, qy, qz, qw = euler_to_quaternion(
-        data["imu"]["ox"], data["imu"]["oy"], data["imu"]["oz"]
+    # _is_absolute = data["motion"]["abs"]
+    # Re-orientation should be handled in your tf tree
+    # Orientation is in degree, in ENU
+    # alpha around z, beta around x, gamma around y
+    # Orientation angle rotations should always be done in a Z - X' - Y'' order
+    orientation_alpha = data["motion"]["oa"]
+    orientation_beta = data["motion"]["ob"]
+    orientation_gamma = data["motion"]["og"]
+    qx, qy, qz, qw = get_quaternion_from_euler(
+        math.radians(orientation_beta),
+        math.radians(orientation_gamma),
+        math.radians(orientation_alpha),
     )
     msg.orientation.x = float(qx)
     msg.orientation.y = float(qy)
     msg.orientation.z = float(qz)
     msg.orientation.w = float(qw)
     msg.orientation_covariance = 9 * [0.0]
-    msg.angular_velocity.x = float(data["imu"]["gx"])
-    msg.angular_velocity.y = float(data["imu"]["gy"])
-    msg.angular_velocity.z = float(data["imu"]["gz"])
+
+    # Rotation rate is in deg/sec, in the device coordinates frame
+    # alpha around z, beta around x, gamma around y
+    rotation_alpha = data["motion"]["ra"]
+    rotation_beta = data["motion"]["rb"]
+    rotation_gamma = data["motion"]["rg"]
+    msg.angular_velocity.x = float(math.radians(rotation_beta))
+    msg.angular_velocity.y = float(math.radians(rotation_gamma))
+    msg.angular_velocity.z = float(math.radians(rotation_alpha))
     msg.angular_velocity_covariance = 9 * [0.0]
-    msg.linear_acceleration.x = float(data["imu"]["ax"])
-    msg.linear_acceleration.y = float(data["imu"]["ay"])
-    msg.linear_acceleration.z = float(data["imu"]["az"])
+
+    # Acceleration is in m/s2, in the device coordinates frame
+    msg.linear_acceleration.x = float(data["motion"]["ax"])
+    msg.linear_acceleration.y = float(data["motion"]["ay"])
+    msg.linear_acceleration.z = float(data["motion"]["az"])
     msg.linear_acceleration_covariance = 9 * [0.0]
     return msg
 
@@ -114,7 +142,9 @@ def data_to_gnss_msgs(data, ros_time, frame_id, source):
     altitude = data["gnss"]["coords"]["altitude"]
     fix.altitude = float(altitude) if altitude is not None else 0.0
     altitude_accuracy = data["gnss"]["coords"]["altitudeAccuracy"]
-    altitude_accuracy = float(altitude_accuracy) if altitude_accuracy is not None else 0.0
+    altitude_accuracy = (
+        float(altitude_accuracy) if altitude_accuracy is not None else 0.0
+    )
     fix.position_covariance = (
         float(data["gnss"]["coords"]["accuracy"]),
         0.0,
