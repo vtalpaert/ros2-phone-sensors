@@ -57,16 +57,6 @@ def generate_launch_description():
                             },
                         ],
                     ),
-                    ComposableNode(
-                        package='depth_image_proc',
-                        plugin='depth_image_proc::PointCloudXyzrgbNode',
-                        name='point_cloud_xyzrgb_node',
-                        remappings=[
-                            ('rgb/image_rect_color', 'camera/image_rect'),
-                            ('depth_registered/image_rect', 'camera/depth'),
-                            ('points', 'camera/points'),
-                        ],
-                    ),
                 ]
             ),
             Node(

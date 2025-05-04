@@ -62,11 +62,10 @@ class ServerNode(Node):
             "",
             (
                 ("time_reference_frequency", -1.0),
-                ("imu_frequency", 100.0),  # 100 Hz for IMU
+                ("imu_frequency", 50.0),  # 50 Hz for IMU
                 ("gnss_frequency", 10.0),  # 10 Hz for GNSS
-                ("camera_device_label", "Facing front:1"),
-                ("show_video_preview", True),
-                ("video_fps", 30.0),
+                ("camera_device_label", "camera2 1, facing front"), # In Firefox, use Facing front:1
+                ("video_fps", 20.0),
                 ("video_width", 1280),  # Default to 720p resolution (horizontal)
                 ("video_height", 720),   # Default to 720p resolution (vertical)
                 ("video_compression", 0.3),
@@ -107,7 +106,11 @@ class ServerNode(Node):
         self.get_logger().error(message)
 
     def handle_data(self, data):
-        if "gnss" in data:
+        if "video_frame" not in data: # and "motion" not in data:
+            self.log_debug(str(data))
+        # currently there is no message that includes several sensors at the same time,
+        # so an if-else logic is sufficient
+        if "loc" in data:
             ros_time = (
                 self.get_clock().now().to_msg()
                 if self.use_ros_time_param.value
@@ -124,7 +127,7 @@ class ServerNode(Node):
                 self.time_reference_gnss_publisher.publish(time)
             except (TypeError, ValueError) as e:
                 self.get_logger().warning(f"Failed to convert GNSS data: {str(e)} in {data}")
-        elif "imu" in data:
+        elif "motion" in data:
             ros_time = (
                 self.get_clock().now().to_msg()
                 if self.use_ros_time_param.value
