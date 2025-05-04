@@ -12,7 +12,7 @@ This repository is inspired by a project I did with students as a TA called [pho
 source /opt/ros/humble/setup.bash
 rosdep install -i --from-path src --rosdistro humble -y --ignore-src
 colcon build --packages-up-to phone_sensors
-# Or build for development
+# Or build for development, but remember to clean and rebuild every time the JS files are changed
 # colcon build --symlink-install  --packages-up-to phone_sensors_examples --event-handlers console_direct+
 ```
 
@@ -86,6 +86,18 @@ The device rotation rate and acceleration are defined in the device coordinate f
 The device orientation is defined in ENU. The angles alpha, beta, gamma we get from the web API are the respective rotations around Z, X, Y.
 We convert these angles to quaternion by using beta as roll, gamma as pitch, alpha as yaw. The behaviour of a device with its Y-axis pointing up is unstable since the API is only defined between -90° to +90°. See the [web API documentation](https://developer.mozilla.org/en-US/docs/Web/API/Window/deviceorientationabsolute_event) for more details.
 
+### Browser compatibility
+
+The current server is tested with Firefox and Chrome.
+
+GeoLocation:
+
+- Issue in Firefox: getting the position silently fails
+
+Video:
+
+- Browsers do not use the same device labels
+
 ## `phone_sensors_examples`
 
 ### Camera calibration & RVIZ
@@ -114,7 +126,7 @@ ros2 launch phone_sensors_examples rviz.launch.py
 ## TODO
 
 - [x] Explain usage with images and how the browser side behaves (in particular permissions)
-- [ ] Test with different browsers (I am looking for testers though !)
+- [x] Test with different browsers (I am looking for testers though !)
 - [ ] Document server files
 - [x] Publish [TimeReference](https://docs.ros2.org/foxy/api/sensor_msgs/msg/TimeReference.html)
 - [x] Publish [IMU](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Imu.html)
@@ -123,7 +135,6 @@ ros2 launch phone_sensors_examples rviz.launch.py
 - [x] Calibrate camera in examples package
 - [x] Publish [CameraInfo](https://docs.ros2.org/foxy/api/sensor_msgs/msg/CameraInfo.html)
 - [x] Publish [video stream (Image)](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Image.html)
-- [ ] Publish orientation as a [Quaternion](http://docs.ros.org/en/api/geometry_msgs/html/msg/Quaternion.html) or [Odometry](http://docs.ros.org/en/api/nav_msgs/html/msg/Odometry.html)
 - [ ] Add [Serial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) or Bluetooth, as a possible way for the phone to send data over USB to a microcontroller
 - [x] Launch file example to set parameters
 - [ ] robot_localization example with control feedback in place of speed odometry

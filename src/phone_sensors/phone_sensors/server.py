@@ -64,7 +64,7 @@ class ServerNode(Node):
                 ("time_reference_frequency", -1.0),
                 ("imu_frequency", 50.0),  # 50 Hz for IMU
                 ("gnss_frequency", 10.0),  # 10 Hz for GNSS
-                ("camera_device_label", "Facing front:1"),
+                ("camera_device_label", "camera2 1, facing front"), # In Firefox, use Facing front:1
                 ("video_fps", 20.0),
                 ("video_width", 1280),  # Default to 720p resolution (horizontal)
                 ("video_height", 720),   # Default to 720p resolution (vertical)

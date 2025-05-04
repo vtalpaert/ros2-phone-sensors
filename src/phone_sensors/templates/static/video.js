@@ -52,7 +52,9 @@ function registerVideoFunctions(socket, window, videoElement) {
                 });
                 // Add delay after stopping tracks
                 setTimeout(() => {
-                    if (!videoSource) {
+                    if (window.videoFps <= 0) {
+                        socket.emit("info", "Video stream disabled due to negative video FPS " + window.videoFps);
+                    } else if (!videoSource) {
                         socket.emit("error", "No available label to match the required " + videoLabel);
                     } else {
                         const constraints = {

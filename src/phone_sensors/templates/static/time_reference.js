@@ -11,6 +11,7 @@ function registerTimeReferencePublisher(socket) {
     function timeReferenceStopSending() {
         if (timeReferenceLoop != 0) {
             clearInterval(timeReferenceLoop);
+            timeReferenceLoop = 0;
         }
         socket.sendBuffer = [];  // empty buffer to stop sending
     };

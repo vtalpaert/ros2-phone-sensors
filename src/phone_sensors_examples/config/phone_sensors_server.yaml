@@ -15,7 +15,7 @@ phone_sensors_server:
     time_reference_frequency: -1.0
     imu_frequency: 50.0
     gnss_frequency: 10.0
-    camera_device_label: "Facing front:1"
+    camera_device_label: "camera2 1, facing front"
     video_fps: 20.0
     video_width: 1280
     video_height: 720
