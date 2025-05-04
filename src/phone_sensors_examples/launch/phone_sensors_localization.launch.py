@@ -37,6 +37,7 @@ def generate_launch_description():
                 output="screen",
                 parameters=[localization_config_file],
                 remappings=[
+                    ("imu/data", "phone_sensors/imu"),
                     ("imu", "phone_sensors/imu"),
                     ("gps/fix", "phone_sensors/gps"),
                     ("odometry/gps", "phone_sensors/odometry"),
