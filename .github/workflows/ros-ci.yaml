@@ -18,7 +18,7 @@ jobs:
           required-ros-distributions: ${{ matrix.distro }}
       - uses: ros-tooling/action-ros-ci@v0.3
         with:
-          package-name: phone_sensors
+          package-name: phone_sensors_bridge
           target-ros2-distro: ${{ matrix.distro }}
           no-symlink-install: true
           skip-tests: true

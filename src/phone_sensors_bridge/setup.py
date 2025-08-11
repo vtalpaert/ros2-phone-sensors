@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = "phone_sensors"
+package_name = "phone_sensors_bridge"
 
 setup(
     name=package_name,
@@ -22,7 +22,7 @@ setup(
     license="Apache-2.0",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["server = phone_sensors.server:main"],
+        "console_scripts": ["server = phone_sensors_bridge.server:main"],
     },
     scripts=["scripts/generate_dev_certificates.sh"],
 )

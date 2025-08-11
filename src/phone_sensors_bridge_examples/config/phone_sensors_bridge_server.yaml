@@ -1,4 +1,4 @@
-phone_sensors_server:
+phone_sensors_bridge_server:
   ros__parameters:
     host: "0.0.0.0"
     port: 2000

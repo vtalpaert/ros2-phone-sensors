@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import find_packages, setup
 
-package_name = "phone_sensors_examples"
+package_name = "phone_sensors_bridge_examples"
 
 setup(
     name=package_name,
@@ -18,7 +18,7 @@ setup(
     zip_safe=True,
     maintainer="victor",
     maintainer_email="victor.talpaert@gmail.com",
-    description="Examples for phone_sensors",
+    description="Examples for phone_sensors_bridge",
     license="Apache-2.0",
     tests_require=["pytest"],
     entry_points={

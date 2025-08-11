@@ -11,7 +11,7 @@ import cv_bridge
 
 from .message_converters import *
 
-package_name = "phone_sensors"
+package_name = "phone_sensors_bridge"
 
 
 class StoppableThread(threading.Thread):

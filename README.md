@@ -11,12 +11,12 @@ This repository is inspired by a project I did with students as a TA called [pho
 ```bash
 source /opt/ros/humble/setup.bash
 rosdep install -i --from-path src --rosdistro humble -y --ignore-src
-colcon build --packages-up-to phone_sensors
+colcon build --packages-up-to phone_sensors_bridge
 # Or build for development, but remember to clean and rebuild every time the JS files are changed
-# colcon build --symlink-install  --packages-up-to phone_sensors_examples --event-handlers console_direct+
+# colcon build --symlink-install  --packages-up-to phone_sensors_bridge_examples --event-handlers console_direct+
 ```
 
-## `phone_sensors` usage
+## `phone_sensors_bridge` usage
 
 ### Quickstart
 
@@ -29,10 +29,10 @@ source install/setup.bash
 EXTRA_IP=$(ip route get 8.8.8.8 | grep -oP 'src \K[^ ]+')
 echo "My IP is $EXTRA_IP"
 # Generate SSL certificates for local webserver 
-ros2 run phone_sensors generate_dev_certificates.sh $EXTRA_IP
+ros2 run phone_sensors_bridge generate_dev_certificates.sh $EXTRA_IP
 
 # Start server
-ros2 run phone_sensors server --ros-args -p video_width:=1280 -p video_height:=720
+ros2 run phone_sensors_bridge server --ros-args -p video_width:=1280 -p video_height:=720
 ```
 
 Open the webpage from your mobile device. The URL contains the server host IP where the node is running. It depends on your network, but most likely is `https://<EXTRA_IP>:2000`.
@@ -98,27 +98,27 @@ Video:
 
 - Browsers do not use the same device labels
 
-## `phone_sensors_examples`
+## `phone_sensors_bridge_examples`
 
 ### Camera calibration & RVIZ
 
-To calibrate you camera, print the [checkerboard](src/phone_sensors_examples/config/calib.io_checker_297x210_8x11_20.pdf) in maximum page size. While printing, do not adjust the size.
+To calibrate you camera, print the [checkerboard](src/phone_sensors_bridge_examples/config/calib.io_checker_297x210_8x11_20.pdf) in maximum page size. While printing, do not adjust the size.
 
 ```bash
 # Calibrate camera using GUI
 source install/setup.bash
-ros2 launch phone_sensors_examples calibrate.launch.py
+ros2 launch phone_sensors_bridge_examples calibrate.launch.py
 
 # Generate SSL certificates for local webserver 
-#ros2 run phone_sensors generate_dev_certificates.sh $(ip route get 8.8.8.8 | grep -oP 'src \K[^ ]+')
+#ros2 run phone_sensors_bridge generate_dev_certificates.sh $(ip route get 8.8.8.8 | grep -oP 'src \K[^ ]+')
 
 # Extract the calibration so that launch files will know where to look
-tar -xvf /tmp/calibrationdata.tar.gz --exclude=*.png --directory src/phone_sensors_examples/config/
+tar -xvf /tmp/calibrationdata.tar.gz --exclude=*.png --directory src/phone_sensors_bridge_examples/config/
 # Server, image rectification, RVIZ
-ros2 launch phone_sensors_examples rviz.launch.py
+ros2 launch phone_sensors_bridge_examples rviz.launch.py
 
 # Start only the node
-#ros2 run phone_sensors server --ros-args -p camera_calibration_file:=src/phone_sensors_examples/config/ost.yaml
+#ros2 run phone_sensors_bridge server --ros-args -p camera_calibration_file:=src/phone_sensors_bridge_examples/config/ost.yaml
 ```
 
 ![RVIZ example](docs/rviz_example.png)

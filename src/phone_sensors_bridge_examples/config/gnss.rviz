@@ -72,12 +72,12 @@ Visualization Manager:
       Length: 50
       Name: Axes
       Radius: 5
-      Reference Frame: phone_sensors
+      Reference Frame: phone_sensors_bridge
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
-    Fixed Frame: phone_sensors
+    Fixed Frame: phone_sensors_bridge
     Frame Rate: 30
   Name: root
   Tools:

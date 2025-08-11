@@ -7,12 +7,12 @@ from ament_index_python import get_package_share_directory
 
 def generate_launch_description():
     server_config_file = os.path.join(
-        get_package_share_directory("phone_sensors_examples"),
+        get_package_share_directory("phone_sensors_bridge_examples"),
         "config",
-        "phone_sensors_server.yaml",
+        "phone_sensors_bridge_server.yaml",
     )
     camera_calibration_file = os.path.join(
-        get_package_share_directory("phone_sensors_examples"),
+        get_package_share_directory("phone_sensors_bridge_examples"),
         "config",
         "ost.yaml",
     )
@@ -20,9 +20,9 @@ def generate_launch_description():
     return LaunchDescription(
         [
             Node(
-                package="phone_sensors",
+                package="phone_sensors_bridge",
                 executable="server",
-                name="phone_sensors_server",
+                name="phone_sensors_bridge_server",
                 output="screen",
                 emulate_tty=True,
                 parameters=[
@@ -32,8 +32,8 @@ def generate_launch_description():
                     },
                 ],
                 remappings=[
-                    ("imu", "phone_sensors/imu"),
-                    ("gnss", "phone_sensors/gps"),
+                    ("imu", "phone_sensors_bridge/imu"),
+                    ("gnss", "phone_sensors_bridge/gps"),
                 ],
             ),
             ComposableNodeContainer(
@@ -66,7 +66,7 @@ def generate_launch_description():
                 arguments=[
                     "--display-config",
                     os.path.join(
-                        get_package_share_directory("phone_sensors_examples"),
+                        get_package_share_directory("phone_sensors_bridge_examples"),
                         "config",
                         "all_sensors.rviz",
                     ),

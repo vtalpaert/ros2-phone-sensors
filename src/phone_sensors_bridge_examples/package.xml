@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>phone_sensors_examples</name>
+  <name>phone_sensors_bridge_examples</name>
   <version>0.0.0</version>
-  <description>Examples for phone_sensors</description>
+  <description>Examples for phone_sensors_bridge</description>
   <maintainer email="victor.talpaert@gmail.com">victor</maintainer>
   <license>Apache-2.0</license>
 
@@ -14,7 +14,7 @@
   <exec_depend>image_pipeline</exec_depend>
   <exec_depend>robot_localization</exec_depend>
 
-  <depend>phone_sensors</depend>
+  <depend>phone_sensors_bridge</depend>
 
   <export>
     <build_type>ament_python</build_type>
