@@ -118,14 +118,16 @@ def data_to_imu_msg(data, ros_time, frame_id):
 
 def data_to_gnss_msgs(data, ros_time, frame_id, source):
     # Typical input with low accuracy {'date_ms': 1732386620779,
-    # 'loc': {'coords': {'latitude': 48.88xxxxx, 'longitude': 2.36xxxxx, 'altitude': 95.30000305175781,
+    # 'loc': {'coords': {'latitude': 48.88xxxxx, 'longitude': 2.36xxxxx,
+    # 'altitude': 95.30000305175781,
     # 'accuracy': 100, 'altitudeAccuracy': 100,
     # 'heading': None, 'speed': None},
     # 'timestamp': 1732386620774}}
 
     fix = NavSatFix()
     # From the documentation, header.stamp specifies the "ROS" time for this measurement
-    # (the corresponding satellite time may be reported using the sensor_msgs/TimeReference message)
+    # (the corresponding satellite time may be reported using the
+    # sensor_msgs/TimeReference message)
     # In our case, mobile phones are synchronised to the millisecond. So we want to
     # report on the precise timestamp at which the geolocation is measured
     # This behaviour is overwritten with use_ros_time parameter

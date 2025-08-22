@@ -9,7 +9,12 @@ from rclpy.node import Node
 from sensor_msgs.msg import TimeReference, Imu, NavSatFix, Image, CameraInfo
 import cv_bridge
 
-from .message_converters import *
+from .message_converters import (
+    data_to_gnss_msgs,
+    data_to_image_msg,
+    data_to_imu_msg,
+    data_to_time_reference_msg,
+)
 
 package_name = "phone_sensors_bridge"
 
@@ -41,8 +46,12 @@ class ServerNode(Node):
         self.port_param = self.declare_parameter("port", 2000)
         self.debug_param = self.declare_parameter("debug", True)
         self.secret_key_param = self.declare_parameter("secret_key", "secret!")
-        self.ssl_certificate_param = self.declare_parameter("ssl_certificate", "certs/certificate.crt")
-        self.ssl_private_key_param = self.declare_parameter("ssl_private_key", "certs/private.key")
+        self.ssl_certificate_param = self.declare_parameter(
+            "ssl_certificate", "certs/certificate.crt"
+        )
+        self.ssl_private_key_param = self.declare_parameter(
+            "ssl_private_key", "certs/private.key"
+        )
 
         self.use_ros_time_param = self.declare_parameter("use_ros_time", False)
 
@@ -64,10 +73,13 @@ class ServerNode(Node):
                 ("time_reference_frequency", -1.0),
                 ("imu_frequency", 50.0),  # 50 Hz for IMU
                 ("gnss_frequency", 10.0),  # 10 Hz for GNSS
-                ("camera_device_label", "camera2 1, facing front"), # In Firefox, use Facing front:1
+                (
+                    "camera_device_label",
+                    "camera2 1, facing front",
+                ),  # In Firefox, use Facing front:1
                 ("video_fps", 20.0),
                 ("video_width", 1280),  # Default to 720p resolution (horizontal)
-                ("video_height", 720),   # Default to 720p resolution (vertical)
+                ("video_height", 720),  # Default to 720p resolution (vertical)
                 ("video_compression", 0.3),
             ),
         )
@@ -81,15 +93,23 @@ class ServerNode(Node):
             TimeReference, "time/gnss", 10
         )
         self.video_publisher = self.create_publisher(Image, "camera/image_raw", 10)
-        
+
         # Load camera calibration if file exists
-        self.camera_calibration_file = self.declare_parameter("camera_calibration_file", "").value
+        self.camera_calibration_file = self.declare_parameter(
+            "camera_calibration_file", ""
+        ).value
         self.camera_info_msg = None
-        if self.camera_calibration_file and os.path.exists(self.camera_calibration_file):
+        if self.camera_calibration_file and os.path.exists(
+            self.camera_calibration_file
+        ):
             try:
                 self.camera_info_msg = yaml_to_camera_info(self.camera_calibration_file)
-                self.get_logger().info(f"Loaded camera calibration from {self.camera_calibration_file}")
-                self.camera_info_publisher = self.create_publisher(CameraInfo, "camera/camera_info", 10)
+                self.get_logger().info(
+                    f"Loaded camera calibration from {self.camera_calibration_file}"
+                )
+                self.camera_info_publisher = self.create_publisher(
+                    CameraInfo, "camera/camera_info", 10
+                )
             except Exception as e:
                 self.get_logger().error(f"Failed to load camera calibration: {str(e)}")
 
@@ -106,7 +126,7 @@ class ServerNode(Node):
         self.get_logger().error(message)
 
     def handle_data(self, data):
-        if "video_frame" not in data: # and "motion" not in data:
+        if "video_frame" not in data:  # and "motion" not in data:
             self.log_debug(str(data))
         # currently there is no message that includes several sensors at the same time,
         # so an if-else logic is sufficient
@@ -126,7 +146,9 @@ class ServerNode(Node):
                 self.gnss_publisher.publish(fix)
                 self.time_reference_gnss_publisher.publish(time)
             except (TypeError, ValueError) as e:
-                self.get_logger().warning(f"Failed to convert GNSS data: {str(e)} in {data}")
+                self.get_logger().warning(
+                    f"Failed to convert GNSS data: {str(e)} in {data}"
+                )
         elif "motion" in data:
             ros_time = (
                 self.get_clock().now().to_msg()
@@ -137,7 +159,9 @@ class ServerNode(Node):
                 msg = data_to_imu_msg(data, ros_time, self.frame_id_imu_param.value)
                 self.imu_publisher.publish(msg)
             except (TypeError, ValueError) as e:
-                self.get_logger().warning(f"Failed to convert IMU data: {str(e)} in {data}")
+                self.get_logger().warning(
+                    f"Failed to convert IMU data: {str(e)} in {data}"
+                )
         elif "device_info" in data:
             self.get_logger().info(
                 "Detected camera device with label %s" % data["device_info"]["label"]
@@ -230,8 +254,9 @@ class ServerApp:
             self.node.handle_data(data)
 
     def run(self):
-        if not os.path.exists(self.node.ssl_certificate_param.value) \
-                or not os.path.exists(self.node.ssl_private_key_param.value):
+        if not os.path.exists(
+            self.node.ssl_certificate_param.value
+        ) or not os.path.exists(self.node.ssl_private_key_param.value):
             print("Missing SSL certificates")
         else:
             self.socketio.run(
