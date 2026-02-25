@@ -61,17 +61,24 @@ The page will prompt for permissions, then display the chosen camera
 | `gnss_frequency`               | float  | 10.0             | Hz     | Rate to emit GNSS data                                       |
 | `frame_id_imu`                 | string | package_name     |        | Frame ID for IMU messages                                    |
 | `frame_id_gnss`                | string | package_name     |        | Frame ID for GNSS messages                                   |
-| `frame_id_image`               | string | package_name     |        | Frame ID for camera image messages                           |
-| `camera_device_label`          | string | "Facing front:1" |        | Label to identify which camera to use                        |
-| `video_fps`                    | float  | 30.0             | Hz     | Video frame rate                                             |
-| `video_width`                  | int    | 1280             | pixels | Video frame width                                            |
-| `video_height`                 | int    | 720              | pixels | Video frame height                                           |
-| `video_compression`            | float  | 0.3              | 0-1    | JPEG compression quality (0=max compression, 1=best quality) |
-| `camera_calibration_file`      | string | ""               | path   | Path to camera calibration YAML file (output from camera_calibration) |
+| `frame_id_image_camera1`       | string | package_name_camera1 |    | Frame ID for camera1 image messages                          |
+| `frame_id_image_camera2`       | string | package_name_camera2 |    | Frame ID for camera2 image messages                          |
+| `camera1_device_label`         | string | "Facing front:3" |        | Label to identify which camera to use for camera1           |
+| `camera1_video_fps`            | float  | 20.0             | Hz     | Video frame rate for camera1                                 |
+| `camera1_video_width`          | int    | 720              | pixels | Video frame width for camera1                                |
+| `camera1_video_height`         | int    | 720              | pixels | Video frame height for camera1                               |
+| `camera1_video_compression`    | float  | 0.3              | 0-1    | JPEG compression quality for camera1 (0=max compression, 1=best quality) |
+| `camera1_calibration_file`     | string | ""               | path   | Path to camera1 calibration YAML file (output from camera_calibration) |
+| `camera2_device_label`         | string | "Facing back:0"  |        | Label to identify which camera to use for camera2           |
+| `camera2_video_fps`            | float  | 20.0             | Hz     | Video frame rate for camera2                                 |
+| `camera2_video_width`          | int    | 720              | pixels | Video frame width for camera2                                |
+| `camera2_video_height`         | int    | 720              | pixels | Video frame height for camera2                               |
+| `camera2_video_compression`    | float  | 0.3              | 0-1    | JPEG compression quality for camera2 (0=max compression, 1=best quality) |
+| `camera2_calibration_file`     | string | ""               | path   | Path to camera2 calibration YAML file (output from camera_calibration) |
 
 A negative value for the time reference, IMU, GNSS frequencies or video FPS will disable sending the corresponding data from the client device. This allows conserving bandwidth and processing power when certain sensors are not needed.
 
-To find out the available `camera_device_label`, open the video test page
+To find out the available `camera1_device_label` and `camera2_device_label`, open the video test page
 <p align="center">
     <img src="docs/webpage_firefox_test_video.jpg" alt="Video test page" width="50%" height="auto">
 </p>

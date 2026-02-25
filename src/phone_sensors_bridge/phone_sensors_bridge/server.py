@@ -14,6 +14,7 @@ from .message_converters import (
     data_to_image_msg,
     data_to_imu_msg,
     data_to_time_reference_msg,
+    yaml_to_camera_info,
 )
 
 package_name = "phone_sensors_bridge"
@@ -60,7 +61,8 @@ class ServerNode(Node):
         )
         self.frame_id_imu_param = self.declare_parameter("frame_id_imu", name)
         self.frame_id_gnss_param = self.declare_parameter("frame_id_gnss", name)
-        self.frame_id_image_param = self.declare_parameter("frame_id_image", name)
+        self.frame_id_image_camera1_param = self.declare_parameter("frame_id_image_camera1", name + "_camera1")
+        self.frame_id_image_camera2_param = self.declare_parameter("frame_id_image_camera2", name + "_camera2")
         self.time_reference_source_gnss_param = self.source_time_reference_param = (
             self.declare_parameter("time_reference_source_gnss", "device_to_gnss")
         )
@@ -74,13 +76,21 @@ class ServerNode(Node):
                 ("imu_frequency", 50.0),  # 50 Hz for IMU
                 ("gnss_frequency", 10.0),  # 10 Hz for GNSS
                 (
-                    "camera_device_label",
-                    "camera2 1, facing front",
-                ),  # In Firefox, use Facing front:1
-                ("video_fps", 20.0),
-                ("video_width", 1280),  # Default to 720p resolution (horizontal)
-                ("video_height", 720),  # Default to 720p resolution (vertical)
-                ("video_compression", 0.3),
+                    "camera1_device_label",
+                    "Facing front:3",
+                ),  # In Firefox, use Facing front:1 and in Chrome use camera2 1
+                ("camera1_video_fps", 20.0),
+                ("camera1_video_width", 720),  # Default to 720p resolution (horizontal)
+                ("camera1_video_height", 720),  # Default to 720p resolution (vertical)
+                ("camera1_video_compression", 0.3),
+                (
+                    "camera2_device_label",
+                    "Facing back:0",
+                ),  # Second camera device label
+                ("camera2_video_fps", 20.0),
+                ("camera2_video_width", 720),
+                ("camera2_video_height", 720),
+                ("camera2_video_compression", 0.3),
             ),
         )
 
@@ -92,26 +102,46 @@ class ServerNode(Node):
         self.time_reference_gnss_publisher = self.create_publisher(
             TimeReference, "time/gnss", 10
         )
-        self.video_publisher = self.create_publisher(Image, "camera/image_raw", 10)
+        self.video_camera1_publisher = self.create_publisher(Image, "camera1/image_raw", 10)
+        self.video_camera2_publisher = self.create_publisher(Image, "camera2/image_raw", 10)
 
-        # Load camera calibration if file exists
-        self.camera_calibration_file = self.declare_parameter(
-            "camera_calibration_file", ""
+        # Load camera calibration if file exists for camera1
+        self.camera1_calibration_file = self.declare_parameter(
+            "camera1_calibration_file", ""
         ).value
-        self.camera_info_msg = None
-        if self.camera_calibration_file and os.path.exists(
-            self.camera_calibration_file
+        self.camera1_info_msg = None
+        if self.camera1_calibration_file and os.path.exists(
+            self.camera1_calibration_file
         ):
             try:
-                self.camera_info_msg = yaml_to_camera_info(self.camera_calibration_file)
+                self.camera1_info_msg = yaml_to_camera_info(self.camera1_calibration_file)
                 self.get_logger().info(
-                    f"Loaded camera calibration from {self.camera_calibration_file}"
+                    f"Loaded camera1 calibration from {self.camera1_calibration_file}"
                 )
-                self.camera_info_publisher = self.create_publisher(
-                    CameraInfo, "camera/camera_info", 10
+                self.camera1_info_publisher = self.create_publisher(
+                    CameraInfo, "camera1/camera_info", 10
                 )
             except Exception as e:
-                self.get_logger().error(f"Failed to load camera calibration: {str(e)}")
+                self.get_logger().error(f"Failed to load camera1 calibration: {str(e)}")
+
+        # Load camera calibration if file exists for camera2
+        self.camera2_calibration_file = self.declare_parameter(
+            "camera2_calibration_file", ""
+        ).value
+        self.camera2_info_msg = None
+        if self.camera2_calibration_file and os.path.exists(
+            self.camera2_calibration_file
+        ):
+            try:
+                self.camera2_info_msg = yaml_to_camera_info(self.camera2_calibration_file)
+                self.get_logger().info(
+                    f"Loaded camera2 calibration from {self.camera2_calibration_file}"
+                )
+                self.camera2_info_publisher = self.create_publisher(
+                    CameraInfo, "camera2/camera_info", 10
+                )
+            except Exception as e:
+                self.get_logger().error(f"Failed to load camera2 calibration: {str(e)}")
 
     def log_debug(self, message):
         self.get_logger().debug(message)
@@ -126,7 +156,7 @@ class ServerNode(Node):
         self.get_logger().error(message)
 
     def handle_data(self, data):
-        if "video_frame" not in data:  # and "motion" not in data:
+        if "video_frame" not in data and "motion" not in data:
             self.log_debug(str(data))
         # currently there is no message that includes several sensors at the same time,
         # so an if-else logic is sufficient
@@ -163,25 +193,41 @@ class ServerNode(Node):
                     f"Failed to convert IMU data: {str(e)} in {data}"
                 )
         elif "device_info" in data:
+            camera_id = data.get("camera_id", "camera1")
             self.get_logger().info(
-                "Detected camera device with label %s" % data["device_info"]["label"]
+                "Detected %s device with label %s" % (camera_id, data["device_info"]["label"])
             )
         elif "video_frame" in data:
+            camera_id = data.get("camera_id", "camera1")
             try:
+                if camera_id == "camera1":
+                    frame_id = self.frame_id_image_camera1_param.value
+                    publisher = self.video_camera1_publisher
+                    camera_info_msg = self.camera1_info_msg
+                    camera_info_publisher = getattr(self, 'camera1_info_publisher', None)
+                elif camera_id == "camera2":
+                    frame_id = self.frame_id_image_camera2_param.value
+                    publisher = self.video_camera2_publisher
+                    camera_info_msg = self.camera2_info_msg
+                    camera_info_publisher = getattr(self, 'camera2_info_publisher', None)
+                else:
+                    self.get_logger().warning(f"Unknown camera_id: {camera_id}")
+                    return
+
                 img_msg = data_to_image_msg(
                     data,
                     self.bridge,
-                    self.frame_id_image_param.value,
+                    frame_id,
                     self.get_clock().now().to_msg(),
                 )
-                self.video_publisher.publish(img_msg)
+                publisher.publish(img_msg)
                 # Publish camera info with same timestamp if available
-                if self.camera_info_msg:
-                    self.camera_info_msg.header.stamp = img_msg.header.stamp
-                    self.camera_info_msg.header.frame_id = img_msg.header.frame_id
-                    self.camera_info_publisher.publish(self.camera_info_msg)
+                if camera_info_msg and camera_info_publisher:
+                    camera_info_msg.header.stamp = img_msg.header.stamp
+                    camera_info_msg.header.frame_id = img_msg.header.frame_id
+                    camera_info_publisher.publish(camera_info_msg)
             except ValueError as e:
-                self.get_logger().warning(f"Failed to convert video frame: {str(e)}")
+                self.get_logger().warning(f"Failed to convert video frame from {camera_id}: {str(e)}")
         else:
             msg = data_to_time_reference_msg(
                 data,
