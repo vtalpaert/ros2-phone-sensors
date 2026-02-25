@@ -15,31 +15,48 @@ function registerGeolocationPublisher(socket, window) {
 
     var watchId = 0;
     function geolocationStartSending(sendInterval) {
-        if (window.geolocation_permission_granted) {
-            socket.emit("debug", "Starting GNSS");
-            if (useWatchPosition) {
-                const options = {
-                    enableHighAccuracy: true,
-                    maximumAge: sendInterval,
-                    timeout: sendInterval,
-                };
-                socket.emit("info", "Starting GNSS watch");
-                watchId = navigator.geolocation.watchPosition(success, error, options);
-            } else {
-                const options = {
-                    enableHighAccuracy: true,
-                    maximumAge: 500,
-                    timeout: 1000,
-                };
-                socket.emit("info", "Starting GNSS get position at " + sendInterval + " ms");
-                watchId = setInterval(
-                    navigator.geolocation.getCurrentPosition(success, error, options),
-                    sendInterval
+        // Request permission if not already granted
+        if (!window.geolocation_permission_granted) {
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    () => {
+                        window.geolocation_permission_granted = true;
+                        socket.emit("info", "Geolocation permission granted");
+                        // Retry starting after permission granted
+                        geolocationStartSending(sendInterval);
+                    },
+                    error => {
+                        socket.emit("error", "Geolocation permission denied: " + error.message);
+                        // Retry in 1 second
+                        setTimeout(() => geolocationStartSending(sendInterval), 1000);
+                    }
                 );
+            } else {
+                socket.emit("error", "Geolocation not available");
             }
+            return;
+        }
+
+        socket.emit("debug", "Starting GNSS");
+        if (useWatchPosition) {
+            const options = {
+                enableHighAccuracy: true,
+                maximumAge: sendInterval,
+                timeout: sendInterval,
+            };
+            socket.emit("info", "Starting GNSS watch");
+            watchId = navigator.geolocation.watchPosition(success, error, options);
         } else {
-            socket.emit("error", "Cannot start GNSS: geolocation permission not granted. Retrying in 1 second...");
-            setTimeout(() => geolocationStartSending(sendInterval), 1000);
+            const options = {
+                enableHighAccuracy: true,
+                maximumAge: 500,
+                timeout: 1000,
+            };
+            socket.emit("info", "Starting GNSS get position at " + sendInterval + " ms");
+            watchId = setInterval(
+                navigator.geolocation.getCurrentPosition(success, error, options),
+                sendInterval
+            );
         }
     };
     function geolocationStopSending() {

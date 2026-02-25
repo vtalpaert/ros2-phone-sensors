@@ -77,24 +77,6 @@
                 logMessage("Motion permission granted by default");
             }
 
-            // Request geolocation permission once
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    () => {
-                        window.geolocation_permission_granted = true;
-                        socket.emit("info", "Geolocation permission granted");
-                        logMessage("Geolocation permission granted");
-                    },
-                    error => {
-                        socket.emit("error", "Geolocation permission denied: " + error.message);
-                        logMessage("Geolocation permission denied: " + error.message);
-                    }
-                );
-            } else {
-                socket.emit("error", "Geolocation not available");
-                logMessage("Geolocation not available");
-            }
-
             socket.on("connect", function() {
                 socket.emit("info", "Connected to server");
                 logMessage("Connected to server");
