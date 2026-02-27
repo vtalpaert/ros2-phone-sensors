@@ -7,12 +7,14 @@ from flask_socketio import SocketIO, emit
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import TimeReference, Imu, NavSatFix, Image, CameraInfo
+from nav_msgs.msg import Odometry
 import cv_bridge
 
 from .message_converters import (
     data_to_gnss_msgs,
     data_to_image_msg,
     data_to_imu_msg,
+    data_to_odometry_msg,
     data_to_time_reference_msg,
     yaml_to_camera_info,
 )
@@ -102,6 +104,7 @@ class ServerNode(Node):
         self.time_reference_gnss_publisher = self.create_publisher(
             TimeReference, "time/gnss", 10
         )
+        self.odometry_publisher = self.create_publisher(Odometry, "gnss/odometry", 10)
         self.video_camera1_publisher = self.create_publisher(Image, "camera1/image_raw", 10)
         self.video_camera2_publisher = self.create_publisher(Image, "camera2/image_raw", 10)
 
@@ -175,6 +178,11 @@ class ServerNode(Node):
                 )
                 self.gnss_publisher.publish(fix)
                 self.time_reference_gnss_publisher.publish(time)
+                odom = data_to_odometry_msg(
+                    data, ros_time, self.frame_id_gnss_param.value
+                )
+                if odom is not None:
+                    self.odometry_publisher.publish(odom)
             except (TypeError, ValueError) as e:
                 self.get_logger().warning(
                     f"Failed to convert GNSS data: {str(e)} in {data}"

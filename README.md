@@ -43,6 +43,20 @@ The page will prompt for permissions, then display the chosen camera
     <img src="docs/webpage_firefox_front_cam.jpg" alt="webpage with firefox" width="50%" height="auto">
 </p>
 
+### Published topics
+
+| Topic | Type | Description |
+| ----- | ---- | ----------- |
+| `time/device` | `sensor_msgs/TimeReference` | Device system clock versus ROS time |
+| `time/gnss` | `sensor_msgs/TimeReference` | GNSS fix acquisition time versus device clock |
+| `imu` | `sensor_msgs/Imu` | Orientation (ENU quaternion), angular velocity and linear acceleration in the device frame |
+| `gnss` | `sensor_msgs/NavSatFix` | GPS fix: latitude, longitude, altitude with horizontal/vertical accuracy covariance |
+| `gnss/odometry` | `nav_msgs/Odometry` | GPS-derived velocity in the ENU frame; pose covariance is 1e9 (fuse twist only) |
+| `camera1/image_raw` | `sensor_msgs/Image` | Camera 1 video stream |
+| `camera2/image_raw` | `sensor_msgs/Image` | Camera 2 video stream |
+| `camera1/camera_info` | `sensor_msgs/CameraInfo` | Camera 1 calibration (only published when `camera1_calibration_file` is set) |
+| `camera2/camera_info` | `sensor_msgs/CameraInfo` | Camera 2 calibration (only published when `camera2_calibration_file` is set) |
+
 ### Parameters
 
 | Name                           | Type   | Default          | Unit   | Description                                                  |
@@ -87,13 +101,42 @@ To find out the available `camera1_device_label` and `camera2_device_label`, ope
 
 ### Coordinates
 
-The device rotation rate and acceleration are defined in the device coordinate frame:
+#### IMU frame (`frame_id_imu`)
+
+The device rotation rate and linear acceleration are expressed in the **device coordinate frame**:
 <p align="center">
     <img src="https://developer.mozilla.org/en-US/docs/Web/API/Device_orientation_events/Orientation_and_motion_data_explained/axes.png" alt="Device coordinate frame" width="50%" height="auto">
 </p>
 
-The device orientation is defined in ENU. The angles alpha, beta, gamma we get from the web API are the respective rotations around Z, X, Y.
-We convert these angles to quaternion by using beta as roll, gamma as pitch, alpha as yaw. The behaviour of a device with its Y-axis pointing up is unstable since the API is only defined between -90° to +90°. See the [web API documentation](https://developer.mozilla.org/en-US/docs/Web/API/Window/deviceorientationabsolute_event) for more details.
+The device orientation is defined in **ENU (East-North-Up)**. The angles alpha, beta, gamma from the web API are rotations around Z, X, Y respectively.
+They are converted to a quaternion using beta as roll, gamma as pitch, alpha as yaw. The behaviour of a device with its Y-axis pointing up is unstable since the API is only defined between -90° to +90°. See the [web API documentation](https://developer.mozilla.org/en-US/docs/Web/API/Window/deviceorientationabsolute_event) for more details.
+
+#### GNSS frame (`frame_id_gnss`)
+
+The `gnss` (NavSatFix) and `gnss/odometry` messages share the same frame ID set by `frame_id_gnss`.
+
+This frame is **ENU-aligned**: X points East, Y points North, Z points Up. The `gnss/odometry` message uses this frame for both `header.frame_id` and `child_frame_id`, meaning the twist is expressed in ENU coordinates:
+
+- `twist.linear.x` — East velocity (m/s)
+- `twist.linear.y` — North velocity (m/s)
+
+The browser [GeolocationCoordinates](https://developer.mozilla.org/en-US/docs/Web/API/GeolocationCoordinates) API reports heading in degrees clockwise from true North (0 = North, 90 = East). This is converted to ENU velocity components as:
+
+```
+vx (East)  = speed × sin(heading_rad)
+vy (North) = speed × cos(heading_rad)
+```
+
+The message is published according to the following cases:
+
+| Condition | Twist | Twist covariance (vx, vy) |
+| --------- | ----- | ------------------------- |
+| `heading` available, `speed` > 0 | ENU velocity from heading + speed | 0.01 (m/s)² |
+| `heading` is null, `speed` ≈ 0 | Zero (stationary) | 0.001 (m/s)² |
+| `heading` is null, `speed` > 0 | Zero (direction unknown) | 1e9 (ignore) |
+| `speed` is null | Not published | — |
+
+The pose covariance is set to 1e9 on all diagonal elements. When using `robot_localization`, configure it to fuse the **twist** from `gnss/odometry` and the **position** from `gnss` (via `navsat_transform_node`), not the pose of the odometry message.
 
 ### Browser compatibility
 
@@ -140,7 +183,7 @@ ros2 launch phone_sensors_bridge_examples rviz.launch.py
 - [x] Publish [TimeReference](https://docs.ros2.org/foxy/api/sensor_msgs/msg/TimeReference.html)
 - [x] Publish [IMU](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Imu.html)
 - [x] Publish [GPS (NavSatFix)](https://docs.ros2.org/foxy/api/sensor_msgs/msg/NavSatFix.html)
-- [ ] If GeoLocation provides speed and heading, publish an Odometry message
+- [x] If GeoLocation provides speed and heading, publish an Odometry message
 - [x] Calibrate camera in examples package
 - [x] Publish [CameraInfo](https://docs.ros2.org/foxy/api/sensor_msgs/msg/CameraInfo.html)
 - [x] Publish [video stream (Image)](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Image.html)

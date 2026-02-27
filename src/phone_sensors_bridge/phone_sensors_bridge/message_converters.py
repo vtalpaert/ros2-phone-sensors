@@ -8,6 +8,7 @@ from sensor_msgs.msg import TimeReference
 from sensor_msgs.msg import Imu
 from sensor_msgs.msg import NavSatFix, NavSatStatus
 from sensor_msgs.msg import CameraInfo
+from nav_msgs.msg import Odometry
 
 
 def millisec_to_sec_nanosec(ms):
@@ -162,10 +163,7 @@ def data_to_gnss_msgs(data, ros_time, frame_id, source):
     )
     fix.position_covariance_type = NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN
 
-    # Do something with heading and speed
-    # Beware that heading is North-West instead of Est-North-Up
-    # (ENU is the normal use in robotics)
-    # https://developer.mozilla.org/en-US/docs/Web/API/GeolocationCoordinates
+    # heading and speed are published via data_to_odometry_msg as a twist-only Odometry message
 
     # Report the time difference between the device time and device GNSS timestamp
     # or the device time to ROS time
@@ -177,6 +175,82 @@ def data_to_gnss_msgs(data, ros_time, frame_id, source):
     time.source = source
 
     return fix, time
+
+
+def data_to_odometry_msg(data, ros_time, frame_id):
+    # Publishes GPS-derived velocity (twist only) as nav_msgs/Odometry.
+    # frame_id is used for both header.frame_id and child_frame_id (ENU frame).
+    # Pose is not populated (covariance = 1e9); robot_localization should fuse twist only.
+    # Returns None if speed is unavailable (Case 4).
+    #
+    # Cases:
+    #   1. heading + speed available: full 2D ENU velocity, low covariance
+    #   2. heading=None, speed~0: zero-velocity update (ZUPT), small covariance
+    #   3. heading=None, speed>0: direction unknown, covariance=1e9 (robot_localization ignores)
+    #   4. speed=None: return None (nothing to publish)
+    #
+    # Browser heading convention: 0=North, 90=East, clockwise.
+    # ENU velocity: vx=east=speed*sin(heading_rad), vy=north=speed*cos(heading_rad)
+    coords = data["loc"]["coords"]
+    speed = coords["speed"]
+    heading = coords["heading"]
+
+    if speed is None:
+        return None
+
+    msg = Odometry()
+    if not ros_time:
+        sec, nanosec = millisec_to_sec_nanosec(data["loc"]["timestamp"])
+        msg.header.stamp.sec = sec
+        msg.header.stamp.nanosec = nanosec
+    else:
+        msg.header.stamp = ros_time
+    msg.header.frame_id = frame_id
+    msg.child_frame_id = frame_id
+
+    # Pose: not populated, covariance set to 1e9 on all diagonal elements
+    _large = 1e9
+    msg.pose.covariance = [
+        _large, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, _large, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, _large, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, _large, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, _large, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, _large,
+    ]
+
+    if heading is not None:
+        # Case 1: decompose into ENU components
+        heading_rad = math.radians(heading)
+        vx = speed * math.sin(heading_rad)   # east
+        vy = speed * math.cos(heading_rad)   # north
+        _speed_var = 0.01   # (0.1 m/s)^2, nominal GPS speed accuracy
+        twist_cov_vx = _speed_var
+        twist_cov_vy = _speed_var
+    else:
+        # Case 2 or 3
+        vx = 0.0
+        vy = 0.0
+        if speed < 0.05:
+            # Case 2: near-zero speed, zero-velocity update
+            twist_cov_vx = 0.001
+            twist_cov_vy = 0.001
+        else:
+            # Case 3: direction unknown
+            twist_cov_vx = _large
+            twist_cov_vy = _large
+
+    msg.twist.twist.linear.x = vx
+    msg.twist.twist.linear.y = vy
+    msg.twist.covariance = [
+        twist_cov_vx, 0.0, 0.0, 0.0, 0.0, 0.0,
+        0.0, twist_cov_vy, 0.0, 0.0, 0.0, 0.0,
+        0.0, 0.0, _large, 0.0, 0.0, 0.0,
+        0.0, 0.0, 0.0, _large, 0.0, 0.0,
+        0.0, 0.0, 0.0, 0.0, _large, 0.0,
+        0.0, 0.0, 0.0, 0.0, 0.0, _large,
+    ]
+    return msg
 
 
 def yaml_to_camera_info(yaml_fname):

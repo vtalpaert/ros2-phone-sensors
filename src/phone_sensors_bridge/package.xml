@@ -8,6 +8,7 @@
   <license>Apache-2.0</license>
 
   <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>python3-numpy</depend>
   <depend>python3-opencv</depend>
