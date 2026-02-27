@@ -1,6 +1,5 @@
 function registerDeviceMotionOrientationPublisher(socket, window) {
     var include_gravity = false;
-    window.motion_permission_granted = false;
     window.motion_init = false;
     window.orientation_init = false;
 

@@ -42,7 +42,7 @@ function registerGeolocationPublisher(socket, window) {
             const options = {
                 enableHighAccuracy: true,
                 maximumAge: sendInterval,
-                timeout: sendInterval,
+                timeout: 5000,
             };
             socket.emit("info", "Starting GNSS watch");
             watchId = navigator.geolocation.watchPosition(success, error, options);
