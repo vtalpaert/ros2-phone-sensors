@@ -1,3 +1,21 @@
+function requestMotionPermission(logCallback) {
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission()
+            .then(state => {
+                window.motion_permission_granted = (state === 'granted');
+                logCallback("Motion permission: " + state);
+            })
+            .catch(error => {
+                window.motion_permission_granted = false;
+                logCallback("Motion permission error: " + error);
+            });
+    } else {
+        // Android / non-iOS browsers don't require explicit permission
+        window.motion_permission_granted = true;
+        logCallback("Motion permission granted by default");
+    }
+}
+
 function registerDeviceMotionOrientationPublisher(socket, window) {
     var include_gravity = false;
     window.motion_init = false;

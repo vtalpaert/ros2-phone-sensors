@@ -1,5 +1,22 @@
+function requestGeolocationPermission(logCallback) {
+    if ("geolocation" in navigator) {
+        navigator.geolocation.getCurrentPosition(
+            () => {
+                window.geolocation_permission_granted = true;
+                logCallback("Geolocation permission granted");
+            },
+            error => {
+                window.geolocation_permission_granted = false;
+                logCallback("Geolocation permission denied: " + error.message);
+            }
+        );
+    } else {
+        window.geolocation_permission_granted = false;
+        logCallback("Geolocation not available");
+    }
+}
+
 function registerGeolocationPublisher(socket, window) {
-    window.geolocation_permission_granted = false;
     const useWatchPosition = true;
 
     function success(geolocation) {
@@ -15,25 +32,9 @@ function registerGeolocationPublisher(socket, window) {
 
     var watchId = 0;
     function geolocationStartSending(sendInterval) {
-        // Request permission if not already granted
         if (!window.geolocation_permission_granted) {
-            if ("geolocation" in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    () => {
-                        window.geolocation_permission_granted = true;
-                        socket.emit("info", "Geolocation permission granted");
-                        // Retry starting after permission granted
-                        geolocationStartSending(sendInterval);
-                    },
-                    error => {
-                        socket.emit("error", "Geolocation permission denied: " + error.message);
-                        // Retry in 1 second
-                        setTimeout(() => geolocationStartSending(sendInterval), 1000);
-                    }
-                );
-            } else {
-                socket.emit("error", "Geolocation not available");
-            }
+            socket.emit("error", "Cannot start GNSS: geolocation permission not granted. Retrying in 1 second...");
+            setTimeout(() => geolocationStartSending(sendInterval), 1000);
             return;
         }
 

@@ -27,11 +27,15 @@
     <script src="{{ url_for('static', filename='video.js') }}"></script>
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function() {
-            var socket = io();
-
             function logMessage(text) {
                 $("#log").append("<br>" + $("<div/>").text(text).html());
             };
+
+            // Request permissions on page load, before socket connects
+            requestMotionPermission(logMessage);      // from device_motion_orientation.js
+            requestGeolocationPermission(logMessage); // from geolocation.js
+
+            var socket = io();
 
             ['log','info','warn','error'].forEach(function (verb) {
                 console[verb] = (function (method, verb, log) {
@@ -47,30 +51,6 @@
                 logMessage("Trigger pushed");
                 event.preventDefault();
             });
-
-            // Request device motion permission
-            if (typeof DeviceMotionEvent.requestPermission === 'function') {
-                DeviceMotionEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            window.motion_permission_granted = true;
-                            socket.emit("info", "Motion permission granted");
-                            logMessage("Motion permission granted");
-                        } else {
-                            socket.emit("error", "Motion permission denied");
-                            logMessage("Motion permission denied");
-                        }
-                    })
-                    .catch(error => {
-                        socket.emit("error", "Error requesting motion permission: " + error);
-                        logMessage("Error requesting motion permission: " + error);
-                    });
-            } else {
-                // For browsers that don't require explicit permission
-                window.motion_permission_granted = true;
-                socket.emit("info", "Motion permission granted by default");
-                logMessage("Motion permission granted by default");
-            }
 
             socket.on("connect", function() {
                 socket.emit("info", "Connected to server");
