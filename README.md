@@ -32,7 +32,7 @@ echo "My IP is $EXTRA_IP"
 ros2 run phone_sensors_bridge generate_dev_certificates.sh $EXTRA_IP
 
 # Start server
-ros2 run phone_sensors_bridge server --ros-args -p video_width:=1280 -p video_height:=720
+ros2 run phone_sensors_bridge server --ros-args -p camera1_video_width:=720 -p camera1_video_height:=720
 ```
 
 Open the webpage from your mobile device. The URL contains the server host IP where the node is running. It depends on your network, but most likely is `https://<EXTRA_IP>:2000`.
@@ -175,24 +175,21 @@ ros2 launch phone_sensors_bridge_examples rviz.launch.py
 
 ![RVIZ example](docs/rviz_example.png)
 
-## TODO
+## Features
 
-- [x] Explain usage with images and how the browser side behaves (in particular permissions)
-- [x] Test with different browsers (I am looking for testers though !)
-- [ ] Document server files
-- [x] Publish [TimeReference](https://docs.ros2.org/foxy/api/sensor_msgs/msg/TimeReference.html)
-- [x] Publish [IMU](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Imu.html)
-- [x] Publish [GPS (NavSatFix)](https://docs.ros2.org/foxy/api/sensor_msgs/msg/NavSatFix.html)
-- [x] If GeoLocation provides speed and heading, publish an Odometry message
-- [x] Calibrate camera in examples package
-- [x] Publish [CameraInfo](https://docs.ros2.org/foxy/api/sensor_msgs/msg/CameraInfo.html)
-- [x] Publish [video stream (Image)](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Image.html)
-- [ ] Add [Serial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) or Bluetooth, as a possible way for the phone to send data over USB to a microcontroller
-- [x] Launch file example to set parameters
-- [ ] robot_localization example with control feedback in place of speed odometry
-- [ ] robot_localization example with visual inertial odometry
-- [x] Fix issue where the video is not sent when `show_video_preview` is `False`
-- [x] Fix frequency issue
-- [ ] Add tests for `message_converters.py`
-- [ ] Use `/camera/image/compressed/jpeg_quality` output topic according to [image_transport](https://wiki.ros.org/image_transport)
-- [ ] Use SocketIO namespaces to separate video and other data
+- Browser-based, no app required — works with Firefox and Chrome on Android
+- Up to 2 simultaneous camera streams with configurable resolution, FPS and compression; camera calibration support via [CameraInfo](https://docs.ros2.org/foxy/api/sensor_msgs/msg/CameraInfo.html)
+- IMU: orientation (ENU quaternion), angular velocity, linear acceleration via [Imu](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Imu.html)
+- GNSS: position via [NavSatFix](https://docs.ros2.org/foxy/api/sensor_msgs/msg/NavSatFix.html) + ENU velocity via Odometry when heading and speed are available
+- Time synchronization between ROS, device and GNSS clocks via [TimeReference](https://docs.ros2.org/foxy/api/sensor_msgs/msg/TimeReference.html)
+- Fully configurable via ROS2 parameters; launch file examples included
+
+## Roadmap
+
+- [ ] Document server-side architecture
+- [ ] `robot_localization` example with visual-inertial odometry
+- [ ] `robot_localization` example with control feedback replacing speed odometry
+- [ ] Tests for `message_converters.py`
+- [ ] [image_transport](https://wiki.ros.org/image_transport)-compatible compressed image topics
+- [ ] SocketIO namespaces to separate video from sensor data
+- [ ] [Serial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) or Bluetooth support — phone as a bridge to a microcontroller over USB
