@@ -72,8 +72,7 @@ The page will prompt for permissions, then display the chosen camera
 | `time_reference_source_gnss`   | string | "device_to_gnss" |        | Source identifier for GNSS TimeReference messages                            |
 | `time_reference_frequency`     | float  | -1.0             | Hz     | Rate to emit TimeReference data                                              |
 | `imu_frequency`                | float  | 50.0             | Hz     | Rate to emit IMU data                                                        |
-| `gnss_use_watch_position`      | bool   | True             |        | Use `watchPosition` API (browser-driven rate) instead of polling             |
-| `gnss_frequency`               | float  | 10.0             | Hz     | Rate to emit GNSS data; only used when `gnss_use_watch_position` is `False`  |
+| `gnss_watch_position`          | bool   | True             |        | Enable GNSS using `watchPosition`; set to `False` to disable GNSS            |
 | `frame_id_imu`                 | string | package_name     |        | Frame ID for IMU messages                                                    |
 | `frame_id_gnss`                | string | package_name     |        | Frame ID for GNSS messages                                                   |
 | `frame_id_image_camera1`       | string | package_name_camera1 |    | Frame ID for camera1 image messages                                          |
@@ -91,9 +90,7 @@ The page will prompt for permissions, then display the chosen camera
 | `camera2_video_compression`    | float  | 0.3              | 0-1    | JPEG compression quality for camera2 (0=max compression, 1=best quality)     |
 | `camera2_calibration_file`     | string | ""               | path   | Path to camera2 calibration YAML file (output from camera_calibration)       |
 
-A negative value for the time reference, IMU, GNSS frequencies or video FPS will disable sending the corresponding data from the client device. This allows conserving bandwidth and processing power when certain sensors are not needed.
-
-Note: `gnss_frequency` only takes effect when `gnss_use_watch_position` is `False`. When `watchPosition` is used (the default), the browser controls the GPS update rate and `gnss_frequency` is ignored.
+A negative value for the time reference or IMU frequency, or a negative video FPS will disable sending the corresponding data from the client device. This allows conserving bandwidth and processing power when certain sensors are not needed.
 
 To find out the available `camera1_device_label` and `camera2_device_label`, open the video test page
 <p align="center">
@@ -145,12 +142,15 @@ The current server is tested with Firefox and Chrome on Android.
 
 GeoLocation:
 
-- With `gnss_use_watch_position: True` (default), `watchPosition` is used and works reliably in both Firefox and Chrome
-- With `gnss_use_watch_position: False` (polling mode), Firefox may silently fail to deliver positions — no error is raised, data simply stops arriving
+- Works reliably in both Firefox and Chrome via `watchPosition`
 
 Video:
 
-- Browsers do not use the same device labels
+- Camera device labels differ between Firefox and Chrome; use the video test page to find the correct `camera1_device_label` and `camera2_device_label` for your browser
+
+Serial / Bluetooth:
+
+- The [Web Serial API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) is only supported in Chrome; Firefox does not implement it
 
 ## `phone_sensors_bridge_examples`
 

@@ -148,7 +148,7 @@ def data_to_gnss_msgs(data, ros_time, frame_id, source):
     fix.altitude = float(altitude) if altitude is not None else 0.0
     altitude_accuracy = data["loc"]["coords"]["altitudeAccuracy"]
     altitude_accuracy = (
-        float(altitude_accuracy) if altitude_accuracy is not None else 0.0
+        float(altitude_accuracy) if altitude_accuracy is not None else 1e9
     )
     fix.position_covariance = (
         float(data["loc"]["coords"]["accuracy"]),
