@@ -76,7 +76,8 @@ class ServerNode(Node):
             (
                 ("time_reference_frequency", -1.0),
                 ("imu_frequency", 50.0),  # 50 Hz for IMU
-                ("gnss_frequency", 10.0),  # 10 Hz for GNSS
+                ("gnss_use_watch_position", True),  # Use watchPosition API (browser-driven rate) vs polling
+                ("gnss_frequency", 10.0),  # 10 Hz for GNSS, only used when gnss_use_watch_position is False
                 (
                     "camera1_device_label",
                     "Facing front:3",

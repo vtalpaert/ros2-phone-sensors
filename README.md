@@ -59,40 +59,41 @@ The page will prompt for permissions, then display the chosen camera
 
 ### Parameters
 
-| Name                           | Type   | Default          | Unit   | Description                                                  |
-| ------------------------------ | ------ | ---------------- | ------ | ------------------------------------------------------------ |
-| `host`                         | string | "0.0.0.0"        | IP     | Use `0.0.0.0` to accept connections outside of localhost     |
-| `port`                         | int    | 2000             |        | The port where the server listens on                         |
-| `debug`                        | bool   | True             |        | Use Flask in debug mode                                      |
-| `secret_key`                   | string | "secret!"        |        | Flask SECRET_KEY                                             |
-| `ssl_certificate`              | string | "certs/certificate.crt" | path | Path to public SSL certificate                          |
-| `ssl_private_key`              | string | "certs/private.key" | path | Path to private SSL key                                     |
-| `use_ros_time`                 | bool   | False            |        | Use ROS time instead of device time for message timestamps   |
-| `time_reference_source_device` | string | "ros_to_device"  |        | Source identifier for device TimeReference messages          |
-| `time_reference_source_gnss`   | string | "device_to_gnss" |        | Source identifier for GNSS TimeReference messages            |
-| `time_reference_frequency`     | float  | -1.0             | Hz     | Rate to emit TimeReference data                              |
-| `imu_frequency`                | float  | 50.0             | Hz     | Rate to emit IMU data                                        |
-| `gnss_frequency`               | float  | 10.0             | Hz     | Rate to emit GNSS data (polling mode only)                   |
-| `frame_id_imu`                 | string | package_name     |        | Frame ID for IMU messages                                    |
-| `frame_id_gnss`                | string | package_name     |        | Frame ID for GNSS messages                                   |
-| `frame_id_image_camera1`       | string | package_name_camera1 |    | Frame ID for camera1 image messages                          |
-| `frame_id_image_camera2`       | string | package_name_camera2 |    | Frame ID for camera2 image messages                          |
-| `camera1_device_label`         | string | "Facing front:3" |        | Label to identify which camera to use for camera1           |
-| `camera1_video_fps`            | float  | 20.0             | Hz     | Video frame rate for camera1                                 |
-| `camera1_video_width`          | int    | 720              | pixels | Video frame width for camera1                                |
-| `camera1_video_height`         | int    | 720              | pixels | Video frame height for camera1                               |
-| `camera1_video_compression`    | float  | 0.3              | 0-1    | JPEG compression quality for camera1 (0=max compression, 1=best quality) |
-| `camera1_calibration_file`     | string | ""               | path   | Path to camera1 calibration YAML file (output from camera_calibration) |
-| `camera2_device_label`         | string | "Facing back:0"  |        | Label to identify which camera to use for camera2           |
-| `camera2_video_fps`            | float  | 20.0             | Hz     | Video frame rate for camera2                                 |
-| `camera2_video_width`          | int    | 720              | pixels | Video frame width for camera2                                |
-| `camera2_video_height`         | int    | 720              | pixels | Video frame height for camera2                               |
-| `camera2_video_compression`    | float  | 0.3              | 0-1    | JPEG compression quality for camera2 (0=max compression, 1=best quality) |
-| `camera2_calibration_file`     | string | ""               | path   | Path to camera2 calibration YAML file (output from camera_calibration) |
+| Name                           | Type   | Default          | Unit   | Description                                                                  |
+| ------------------------------ | ------ | ---------------- | ------ | ---------------------------------------------------------------------------- |
+| `host`                         | string | "0.0.0.0"        | IP     | Use `0.0.0.0` to accept connections outside of localhost                     |
+| `port`                         | int    | 2000             |        | The port where the server listens on                                         |
+| `debug`                        | bool   | True             |        | Use Flask in debug mode                                                      |
+| `secret_key`                   | string | "secret!"        |        | Flask SECRET_KEY                                                             |
+| `ssl_certificate`              | string | "certs/certificate.crt" | path | Path to public SSL certificate                                          |
+| `ssl_private_key`              | string | "certs/private.key" | path | Path to private SSL key                                                     |
+| `use_ros_time`                 | bool   | False            |        | Use ROS time instead of device time for message timestamps                   |
+| `time_reference_source_device` | string | "ros_to_device"  |        | Source identifier for device TimeReference messages                          |
+| `time_reference_source_gnss`   | string | "device_to_gnss" |        | Source identifier for GNSS TimeReference messages                            |
+| `time_reference_frequency`     | float  | -1.0             | Hz     | Rate to emit TimeReference data                                              |
+| `imu_frequency`                | float  | 50.0             | Hz     | Rate to emit IMU data                                                        |
+| `gnss_use_watch_position`      | bool   | True             |        | Use `watchPosition` API (browser-driven rate) instead of polling             |
+| `gnss_frequency`               | float  | 10.0             | Hz     | Rate to emit GNSS data; only used when `gnss_use_watch_position` is `False`  |
+| `frame_id_imu`                 | string | package_name     |        | Frame ID for IMU messages                                                    |
+| `frame_id_gnss`                | string | package_name     |        | Frame ID for GNSS messages                                                   |
+| `frame_id_image_camera1`       | string | package_name_camera1 |    | Frame ID for camera1 image messages                                          |
+| `frame_id_image_camera2`       | string | package_name_camera2 |    | Frame ID for camera2 image messages                                          |
+| `camera1_device_label`         | string | "Facing front:3" |        | Label to identify which camera to use for camera1                            |
+| `camera1_video_fps`            | float  | 20.0             | Hz     | Video frame rate for camera1                                                 |
+| `camera1_video_width`          | int    | 720              | pixels | Video frame width for camera1                                                |
+| `camera1_video_height`         | int    | 720              | pixels | Video frame height for camera1                                               |
+| `camera1_video_compression`    | float  | 0.3              | 0-1    | JPEG compression quality for camera1 (0=max compression, 1=best quality)     |
+| `camera1_calibration_file`     | string | ""               | path   | Path to camera1 calibration YAML file (output from camera_calibration)       |
+| `camera2_device_label`         | string | "Facing back:0"  |        | Label to identify which camera to use for camera2                            |
+| `camera2_video_fps`            | float  | 20.0             | Hz     | Video frame rate for camera2                                                 |
+| `camera2_video_width`          | int    | 720              | pixels | Video frame width for camera2                                                |
+| `camera2_video_height`         | int    | 720              | pixels | Video frame height for camera2                                               |
+| `camera2_video_compression`    | float  | 0.3              | 0-1    | JPEG compression quality for camera2 (0=max compression, 1=best quality)     |
+| `camera2_calibration_file`     | string | ""               | path   | Path to camera2 calibration YAML file (output from camera_calibration)       |
 
 A negative value for the time reference, IMU, GNSS frequencies or video FPS will disable sending the corresponding data from the client device. This allows conserving bandwidth and processing power when certain sensors are not needed.
 
-Note: `gnss_frequency` only takes effect when `useWatchPosition` is set to `false` in `geolocation.js`. When `watchPosition` is used (the current default), the browser controls the GPS update rate and this parameter is ignored.
+Note: `gnss_frequency` only takes effect when `gnss_use_watch_position` is `False`. When `watchPosition` is used (the default), the browser controls the GPS update rate and `gnss_frequency` is ignored.
 
 To find out the available `camera1_device_label` and `camera2_device_label`, open the video test page
 <p align="center">
@@ -140,11 +141,12 @@ The pose covariance is set to 1e9 on all diagonal elements. When using `robot_lo
 
 ### Browser compatibility
 
-The current server is tested with Firefox and Chrome.
+The current server is tested with Firefox and Chrome on Android.
 
 GeoLocation:
 
-- Issue in Firefox: getting the position silently fails
+- With `gnss_use_watch_position: True` (default), `watchPosition` is used and works reliably in both Firefox and Chrome
+- With `gnss_use_watch_position: False` (polling mode), Firefox may silently fail to deliver positions — no error is raised, data simply stops arriving
 
 Video:
 
@@ -190,6 +192,8 @@ ros2 launch phone_sensors_bridge_examples rviz.launch.py
 - [ ] `robot_localization` example with visual-inertial odometry
 - [ ] `robot_localization` example with control feedback replacing speed odometry
 - [ ] Tests for `message_converters.py`
-- [ ] [image_transport](https://wiki.ros.org/image_transport)-compatible compressed image topics
+- [ ] Publish `sensor_msgs/CompressedImage` on `camera1/image_raw/compressed` following the [image_transport](https://wiki.ros.org/image_transport) convention - the JPEG bytes from the browser can be placed directly into `CompressedImage.data`, skipping the current decode → numpy → OpenCV → CvBridge chain entirely
+- [ ] Switch the video channel to binary WebSocket frames to eliminate the base64 encoding overhead (~33% size reduction); pairs naturally with the `CompressedImage` change
 - [ ] SocketIO namespaces to separate video from sensor data
 - [ ] [Serial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) or Bluetooth support — phone as a bridge to a microcontroller over USB
+- [ ] Remove `debug` and `secret_key` parameters and hardcode safe defaults (`debug=False`, randomised secret); these are Flask internals that should not be exposed as ROS parameters

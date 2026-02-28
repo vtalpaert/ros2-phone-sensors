@@ -17,7 +17,13 @@ function requestGeolocationPermission(logCallback) {
 }
 
 function registerGeolocationPublisher(socket, window) {
-    const useWatchPosition = true;
+    let useWatchPosition = true;
+
+    // Must be received before "gnss_frequency" fires (guaranteed by server emission order
+    // in client_params, where gnss_use_watch_position is declared before gnss_frequency).
+    socket.on("gnss_use_watch_position", function (value) {
+        useWatchPosition = value;
+    });
 
     function success(geolocation) {
         socket.emit("data", {
@@ -31,6 +37,8 @@ function registerGeolocationPublisher(socket, window) {
     }
 
     var watchId = 0;
+    // sendInterval is only used in polling mode (useWatchPosition=false).
+    // In watch mode the browser controls the update rate and sendInterval is ignored.
     function geolocationStartSending(sendInterval) {
         if (!window.geolocation_permission_granted) {
             socket.emit("error", "Cannot start GNSS: geolocation permission not granted. Retrying in 1 second...");
@@ -73,10 +81,13 @@ function registerGeolocationPublisher(socket, window) {
         socket.sendBuffer = [];  // empty buffer to stop sending
     };
 
+    // "gnss_frequency" is always the start/stop trigger regardless of mode (value <= 0 disables GNSS).
+    // The computed interval is only meaningful in polling mode; in watch mode it is passed through
+    // but ignored inside geolocationStartSending.
     socket.on("gnss_frequency", function (value, cb) {
         geolocationStopSending();
         if (value > 0) {
-            const interval = Math.floor(1000 / value);  // convert Hz to ms
+            const interval = Math.floor(1000 / value);  // convert Hz to ms, used in polling mode only
             geolocationStartSending(interval);
         }
     });
