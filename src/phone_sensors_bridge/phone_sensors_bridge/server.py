@@ -61,8 +61,8 @@ class ServerNode(Node):
         self.time_reference_source_device_param = self.declare_parameter(
             "time_reference_source_device", "ros_to_device"
         )
-        self.frame_id_imu_param = self.declare_parameter("frame_id_imu", name)
-        self.frame_id_gnss_param = self.declare_parameter("frame_id_gnss", name)
+        self.frame_id_imu_param = self.declare_parameter("frame_id_imu", name+ "_imu")
+        self.frame_id_gnss_param = self.declare_parameter("frame_id_gnss", name+ "_gnss")
         self.frame_id_image_camera1_param = self.declare_parameter("frame_id_image_camera1", name + "_camera1")
         self.frame_id_image_camera2_param = self.declare_parameter("frame_id_image_camera2", name + "_camera2")
         self.time_reference_source_gnss_param = self.source_time_reference_param = (

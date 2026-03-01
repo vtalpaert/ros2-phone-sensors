@@ -73,8 +73,8 @@ The page will prompt for permissions, then display the chosen camera
 | `time_reference_frequency`     | float  | -1.0             | Hz     | Rate to emit TimeReference data                                              |
 | `imu_frequency`                | float  | 50.0             | Hz     | Rate to emit IMU data                                                        |
 | `gnss_watch_position`          | bool   | True             |        | Enable GNSS using `watchPosition`; set to `False` to disable GNSS            |
-| `frame_id_imu`                 | string | package_name     |        | Frame ID for IMU messages                                                    |
-| `frame_id_gnss`                | string | package_name     |        | Frame ID for GNSS messages                                                   |
+| `frame_id_imu`                 | string | package_name_imu |        | Frame ID for IMU messages                                                    |
+| `frame_id_gnss`                | string | package_name_gnss |        | Frame ID for GNSS messages                                                   |
 | `frame_id_image_camera1`       | string | package_name_camera1 |    | Frame ID for camera1 image messages                                          |
 | `frame_id_image_camera2`       | string | package_name_camera2 |    | Frame ID for camera2 image messages                                          |
 | `camera1_device_label`         | string | "Facing front:3" |        | Label to identify which camera to use for camera1                            |
