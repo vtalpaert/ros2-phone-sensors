@@ -276,6 +276,14 @@ class ServerApp:
         def test_permissions():
             return render_template("test_video_permissions.html")
 
+        @self.app.route("/test-web-usb")
+        def test_web_usb():
+            return render_template("test_web_usb.html")
+
+        @self.app.route("/test-serial")
+        def test_serial():
+            return render_template("test_serial.html")
+
         @self.socketio.on("connect")
         def handle_connect_event():
             # Configure client based on ROS parameters

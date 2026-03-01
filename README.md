@@ -175,7 +175,7 @@ The published `NavSatFix` and `Odometry` messages use the GNSS time, which may b
 
 #### Serial / Bluetooth
 
-- The [Web Serial API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) is only supported in Chrome; Firefox does not implement it
+- The [Web Serial API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) is not supported in Firefox. On Android Chrome, it requires version 138 or later (Bluetooth RFCOMM serial only) or version 145+ for full USB serial support. Chrome 131 does not support it. Use the Web USB test page (`/test-web-usb`) to verify support on your device.
 
 ## `phone_sensors_bridge_examples`
 

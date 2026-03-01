@@ -1,0 +1,207 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>ROS2 Phone Sensors</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha384-5AkRS45j4ukf+JbWAfHL8P4onPA9p0KwwP7pUdjSQA3ss9edbJUJc/XcYAiheSSz" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>ROS2 Phone Sensors : Test Web Serial</h1>
+
+    <form id="request-port" method="POST" action="#">
+        <input type="submit" value="Request port">
+    </form>
+
+    <form id="list-ports" method="POST" action="#">
+        <input type="submit" value="List paired ports">
+    </form>
+
+    <div>
+        <label for="baud-rate">Baud rate: </label>
+        <input id="baud-rate" type="number" value="9600">
+    </div>
+
+    <form id="open-port" method="POST" action="#">
+        <input type="submit" value="Open port">
+    </form>
+
+    <form id="send-form" method="POST" action="#">
+        <input id="send-input" type="text" placeholder="Text to send">
+        <input type="submit" value="Send">
+    </form>
+
+    <form id="close-port" method="POST" action="#">
+        <input type="submit" value="Close port">
+    </form>
+
+    <a href="/">Back to home page</a>
+
+    <h2>Received:</h2>
+    <div id="received"></div>
+
+    <h2>Log:</h2>
+    <div id="log"></div>
+
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function() {
+            var port = null;
+            var reader = null;
+            var writer = null;
+            var readableStreamClosed = null;
+            var writableStreamClosed = null;
+
+            function logMessage(text) {
+                $("#log").append("<br>" + $("<div/>").text(text).html());
+            }
+
+            function displayReceived(line) {
+                $("#received").append("<br>" + $("<div/>").text(line).html());
+            }
+
+            function portInfo(p) {
+                var info = p.getInfo();
+                return "vendorId=0x" + (info.usbVendorId || 0).toString(16).padStart(4, "0") +
+                       ", productId=0x" + (info.usbProductId || 0).toString(16).padStart(4, "0");
+            }
+
+            // Transforms a decoded text stream into individual lines
+            class LineBreakTransformer {
+                constructor() { this.chunks = ""; }
+                transform(chunk, controller) {
+                    this.chunks += chunk;
+                    const lines = this.chunks.split("\r\n");
+                    this.chunks = lines.pop();
+                    lines.forEach((line) => controller.enqueue(line));
+                }
+                flush(controller) { controller.enqueue(this.chunks); }
+            }
+
+            async function readLoop() {
+                const textDecoder = new TextDecoderStream();
+                readableStreamClosed = port.readable.pipeTo(textDecoder.writable);
+                reader = textDecoder.readable
+                    .pipeThrough(new TransformStream(new LineBreakTransformer()))
+                    .getReader();
+                try {
+                    while (true) {
+                        const { value, done } = await reader.read();
+                        if (done) {
+                            reader.releaseLock();
+                            break;
+                        }
+                        if (value) {
+                            displayReceived(value);
+                        }
+                    }
+                } catch (error) {
+                    logMessage("Read error: " + error.toString());
+                }
+            }
+
+            if (!navigator.serial) {
+                logMessage("Web Serial is not supported in this browser.");
+            } else {
+                logMessage("Web Serial is supported.");
+
+                navigator.serial.addEventListener("connect", (event) => {
+                    logMessage("Serial device connected: " + portInfo(event.target));
+                });
+
+                navigator.serial.addEventListener("disconnect", (event) => {
+                    logMessage("Serial device disconnected: " + portInfo(event.target));
+                });
+
+                // List already-granted ports on page load
+                navigator.serial.getPorts().then((ports) => {
+                    if (ports.length === 0) {
+                        logMessage("No paired ports on load.");
+                        return;
+                    }
+                    logMessage("Paired ports on load: " + ports.length);
+                    ports.forEach((p, i) => {
+                        logMessage("port[" + i + "]: " + portInfo(p));
+                    });
+                });
+            }
+
+            $("#request-port").on("submit", function(event) {
+                event.preventDefault();
+                if (!navigator.serial) { logMessage("Web Serial not supported."); return; }
+                navigator.serial.requestPort({ filters: [] })
+                    .then((p) => {
+                        port = p;
+                        logMessage("Port selected: " + portInfo(p));
+                    })
+                    .catch((error) => {
+                        logMessage("Request error: " + error.toString());
+                    });
+            });
+
+            $("#list-ports").on("submit", function(event) {
+                event.preventDefault();
+                if (!navigator.serial) { logMessage("Web Serial not supported."); return; }
+                navigator.serial.getPorts().then((ports) => {
+                    if (ports.length === 0) {
+                        logMessage("No paired ports found.");
+                        return;
+                    }
+                    logMessage("Paired ports: " + ports.length);
+                    ports.forEach((p, i) => {
+                        logMessage("port[" + i + "]: " + portInfo(p));
+                    });
+                });
+            });
+
+            $("#open-port").on("submit", async function(event) {
+                event.preventDefault();
+                if (!navigator.serial) { logMessage("Web Serial not supported."); return; }
+                if (!port) { logMessage("No port selected. Use 'Request port' first."); return; }
+                const baudRate = parseInt($("#baud-rate").val()) || 9600;
+                try {
+                    await port.open({ baudRate });
+                    logMessage("Port opened at " + baudRate + " baud.");
+
+                    const textEncoder = new TextEncoderStream();
+                    writableStreamClosed = textEncoder.readable.pipeTo(port.writable);
+                    writer = textEncoder.writable.getWriter();
+
+                    readLoop();
+                } catch (error) {
+                    logMessage("Open error: " + error.toString());
+                }
+            });
+
+            $("#send-form").on("submit", async function(event) {
+                event.preventDefault();
+                if (!writer) { logMessage("Port not open."); return; }
+                const text = $("#send-input").val();
+                try {
+                    await writer.write(text);
+                    logMessage("Sent: " + text);
+                    $("#send-input").val("");
+                } catch (error) {
+                    logMessage("Send error: " + error.toString());
+                }
+            });
+
+            $("#close-port").on("submit", async function(event) {
+                event.preventDefault();
+                if (!port) { logMessage("No port open."); return; }
+                try {
+                    reader.cancel();
+                    await readableStreamClosed.catch(() => {});
+                    writer.close();
+                    await writableStreamClosed;
+                    await port.close();
+                    logMessage("Port closed.");
+                    port = null; reader = null; writer = null;
+                    readableStreamClosed = null; writableStreamClosed = null;
+                } catch (error) {
+                    logMessage("Close error: " + error.toString());
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

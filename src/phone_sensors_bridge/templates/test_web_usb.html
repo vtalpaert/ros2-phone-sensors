@@ -1,0 +1,106 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>ROS2 Phone Sensors</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.slim.min.js" integrity="sha384-5AkRS45j4ukf+JbWAfHL8P4onPA9p0KwwP7pUdjSQA3ss9edbJUJc/XcYAiheSSz" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>ROS2 Phone Sensors : Test Web USB</h1>
+
+    <form id="request-device" method="POST" action="#">
+        <input type="submit" value="Request USB device">
+    </form>
+
+    <form id="list-devices" method="POST" action="#">
+        <input type="submit" value="List paired devices">
+    </form>
+
+    <a href="/">Back to home page</a>
+
+    <h2>Devices:</h2>
+    <div id="device-list"></div>
+
+    <h2>Log:</h2>
+    <div id="log"></div>
+
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function() {
+            function logMessage(text) {
+                $("#log").append("<br>" + $("<div/>").text(text).html());
+            }
+
+            function displayDevice(device, label) {
+                var info = label + ": " +
+                    "name=" + (device.productName || "(unknown)") +
+                    ", manufacturer=" + (device.manufacturerName || "(unknown)") +
+                    ", vendorId=0x" + device.vendorId.toString(16).padStart(4, "0") +
+                    ", productId=0x" + device.productId.toString(16).padStart(4, "0") +
+                    ", serialNumber=" + (device.serialNumber || "(none)");
+                $("#device-list").append("<br>" + $("<div/>").text(info).html());
+                logMessage(info);
+            }
+
+            if (!navigator.usb) {
+                logMessage("WebUSB is not supported in this browser.");
+            } else {
+                logMessage("WebUSB is supported.");
+
+                navigator.usb.addEventListener("connect", (event) => {
+                    logMessage("USB device connected: " + (event.device.productName || "(unknown)"));
+                });
+
+                navigator.usb.addEventListener("disconnect", (event) => {
+                    logMessage("USB device disconnected: " + (event.device.productName || "(unknown)"));
+                });
+            }
+
+            if (!navigator.serial) {
+                logMessage("Web Serial is not supported in this browser.");
+            } else {
+                logMessage("Web Serial is supported.");
+            }
+
+            $("#request-device").on("submit", function(event) {
+                event.preventDefault();
+                if (!navigator.usb) {
+                    logMessage("WebUSB not supported.");
+                    return;
+                }
+                navigator.usb.requestDevice({ filters: [] })
+                    .then((device) => {
+                        logMessage("Device selected by user:");
+                        displayDevice(device, "selected");
+                    })
+                    .catch((error) => {
+                        logMessage("Request error: " + error.toString());
+                    });
+            });
+
+            $("#list-devices").on("submit", function(event) {
+                event.preventDefault();
+                if (!navigator.usb) {
+                    logMessage("WebUSB not supported.");
+                    return;
+                }
+                $("#device-list").empty();
+                navigator.usb.getDevices()
+                    .then((devices) => {
+                        if (devices.length === 0) {
+                            logMessage("No paired USB devices found.");
+                            return;
+                        }
+                        logMessage("Found " + devices.length + " paired device(s):");
+                        devices.forEach((device, index) => {
+                            displayDevice(device, "device[" + index + "]");
+                        });
+                    })
+                    .catch((error) => {
+                        logMessage("getDevices error: " + error.toString());
+                    });
+            });
+        });
+    </script>
+
+</body>
+</html>
