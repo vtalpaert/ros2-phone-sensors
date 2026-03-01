@@ -13,6 +13,10 @@
         <input type="submit" value="Trigger">
     </form>
 
+    <form id="measure-latency" method="POST" action="#">
+        <input type="submit" value="Measure latency">
+    </form>
+
     <a href="/test-video-permissions">Open video test page</a>
 
     <video id="video-camera1" autoplay muted playsinline></video>
@@ -25,6 +29,7 @@
     <script src="{{ url_for('static', filename='device_motion_orientation.js') }}"></script>
     <script src="{{ url_for('static', filename='geolocation.js') }}"></script>
     <script src="{{ url_for('static', filename='video.js') }}"></script>
+    <script src="{{ url_for('static', filename='latency.js') }}"></script>
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function() {
             function logMessage(text) {
@@ -52,6 +57,12 @@
                 event.preventDefault();
             });
 
+            var triggerLatency = null;
+            $( "#measure-latency" ).on( "submit", function( event ) {
+                event.preventDefault();
+                if (triggerLatency) triggerLatency();
+            });
+
             socket.on("connect", function() {
                 socket.emit("info", "Connected to server");
                 logMessage("Connected to server");
@@ -62,6 +73,7 @@
                 registerGeolocationPublisher(socket, window); // from geolocation.js
                 registerVideoFunctions(socket, document.getElementById('video-camera1'), 'camera1'); // from video.js
                 registerVideoFunctions(socket, document.getElementById('video-camera2'), 'camera2'); // from video.js
+                triggerLatency = registerLatencyMeasurement(socket, logMessage); // from latency.js
             });
 
 

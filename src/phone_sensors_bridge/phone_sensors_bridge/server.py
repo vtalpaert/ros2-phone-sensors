@@ -79,7 +79,7 @@ class ServerNode(Node):
                 ("gnss_watch_position", True),  # True enables GNSS via watchPosition, False disables GNSS
                 (
                     "camera1_device_label",
-                    "Facing front:3",
+                    "camera2 1, facing front",
                 ),  # In Firefox, use Facing front:1 and in Chrome use camera2 1
                 ("camera1_video_fps", 20.0),
                 ("camera1_video_width", 720),  # Default to 720p resolution (horizontal)
@@ -87,7 +87,7 @@ class ServerNode(Node):
                 ("camera1_video_compression", 0.3),
                 (
                     "camera2_device_label",
-                    "Facing back:0",
+                    "camera2 0, facing back",
                 ),  # Second camera device label
                 ("camera2_video_fps", 20.0),
                 ("camera2_video_width", 720),
@@ -306,6 +306,14 @@ class ServerApp:
         @self.socketio.on("data")
         def handle_data_event(data):
             self.node.handle_data(data)
+
+        @self.socketio.on("latency_ping")
+        def handle_latency_ping_event(data):
+            t_server_ms = self.node.get_clock().now().nanoseconds // 1_000_000
+            emit("latency_pong", {
+                "t1": data["t1"],
+                "t_server_ms": t_server_ms,
+            })
 
     def run(self):
         if not os.path.exists(

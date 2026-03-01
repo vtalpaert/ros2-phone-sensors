@@ -136,19 +136,44 @@ The message is published according to the following cases:
 
 The pose covariance is set to 1e9 on all diagonal elements. When using `robot_localization`, configure it to fuse the **twist** from `gnss/odometry` and the **position** from `gnss` (via `navsat_transform_node`), not the pose of the odometry message.
 
-### Browser compatibility
+### Results
 
 The current server is tested with Firefox and Chrome on Android.
 
-GeoLocation:
+#### Latency
 
-- Works reliably in both Firefox and Chrome via `watchPosition`
+The webpage includes a "Measure latency" button that runs 100 sequential WebSocket ping-pong round trips and reports one-way latency and clock offset using the NTP formula:
 
-Video:
+```txt
+RTT             = t2_client - t1_client
+latency         = RTT / 2
+clock_offset    = t_server - (t1_client + t2_client) / 2
+```
 
-- Camera device labels differ between Firefox and Chrome; use the video test page to find the correct `camera1_device_label` and `camera2_device_label` for your browser
+Example measurement over a local WiFi network when running two video feeds, IMU and GNSS:
 
-Serial / Bluetooth:
+```txt
+Latency (N=100): mean=9.82 ms, min=2.00 ms, max=20.00 ms | Clock offset (ROS-client): mean=-291.74 ms, min=-301.50 ms, max=-283.00 ms
+```
+
+A **negative clock offset** means the ROS clock is behind the client (phone) clock — in this case by ~292 ms. A **positive offset** would mean the ROS clock is ahead. This offset is stable across samples (spread of ~18 ms), which indicates a consistent skew rather than jitter. When timestamping sensor data, the `time/device` TimeReference topic captures this relationship explicitly.
+
+![Time differences (plotjuggler)](docs/plotjuggler_difference_only_running_time.png)
+We observe the same clock offset in PlotJuggler expressed in seconds, in this case measured running only `time_reference_frequency:=100.0` and no video. The offset here is the difference in clock time **plus network latency**
+
+#### GeoLocation
+
+- Works in both Firefox and Chrome via `watchPosition`. To obtain an `Odometry` message, you may need to move around your device.
+- If your log show a GNSS starting error on Chrome, sometimes waiting 10s will fix it. Otherwise a page reload can help solve some cases.
+
+![GNSS time differences (plotjuggler)](docs/plotjuggler_time_gnss.png)
+The published `NavSatFix` and `Odometry` messages use the GNSS time, which may be 50 ms old when the browser on the client side obtains the data (red line). This directly depends on the quality of GNSS reception, this delay may be much higher indoor far away from a window. A `TimeReference` message on `/time/gnss` is always published to report this delay.
+
+#### Video
+
+- Camera device labels differ between Firefox and Chrome; the `test_video_permissions` page (linked from the home page) shows the correct `camera1_device_label` and `camera2_device_label` for your browser
+
+#### Serial / Bluetooth
 
 - The [Web Serial API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) is only supported in Chrome; Firefox does not implement it
 
