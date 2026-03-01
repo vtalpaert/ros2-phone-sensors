@@ -156,13 +156,16 @@ function registerVideoFunctions(socket, videoElement, cameraId) {
 
                     // Only send if frame is not empty
                     if (canvas.width > 0 && canvas.height > 0) {
-                        // Convert to base64 and send through websocket
-                        const frame = canvas.toDataURL('image/jpeg', localVideoCompression || 0.7);
-                        socket.emit("data", {
-                            date_ms: Date.now(),
-                            camera_id: cameraId,
-                            video_frame: frame
-                        });
+                        const dateMs = BigInt(Date.now());
+                        canvas.toBlob((blob) => {
+                            blob.arrayBuffer().then(jpegBuffer => {
+                                // Prepend 8-byte little-endian uint64 timestamp header
+                                const buf = new Uint8Array(8 + jpegBuffer.byteLength);
+                                new DataView(buf.buffer).setBigUint64(0, dateMs, true);
+                                buf.set(new Uint8Array(jpegBuffer), 8);
+                                socket.emit(cameraId + "_frame", buf.buffer);
+                            });
+                        }, 'image/jpeg', localVideoCompression || 0.7);
                     }
                 }, interval);
                 socket.emit("info", cameraId + " video effective interval (ms): " + interval);

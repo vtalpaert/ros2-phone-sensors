@@ -8,15 +8,23 @@ phone_sensors_bridge_server:
     ssl_private_key: "certs/private.key"
     use_ros_time: false
     time_reference_source_device: "ros_to_device"
-    frame_id_imu: "base_link"
-    frame_id_gnss: "base_link"
-    frame_id_image: "base_link"
     time_reference_source_gnss: "device_to_gnss"
     time_reference_frequency: -1.0
     imu_frequency: 50.0
-    gnss_frequency: 10.0
-    camera_device_label: "camera2 1, facing front"
-    video_fps: 20.0
-    video_width: 1280
-    video_height: 720
-    video_compression: 0.3
+    gnss_watch_position: true
+    frame_id_imu: "imu"
+    frame_id_gnss: "gnss"
+    frame_id_image_camera1: "camera1"
+    frame_id_image_camera2: "camera2"
+    camera1_device_label: "camera2 1, facing front"
+    camera1_video_fps: 20.0
+    camera1_video_width: 720
+    camera1_video_height: 720
+    camera1_video_compression: 0.3
+    camera1_calibration_file: ""
+    camera2_device_label: "camera2 0, facing back"
+    camera2_video_fps: 20.0
+    camera2_video_width: 720
+    camera2_video_height: 720
+    camera2_video_compression: 0.3
+    camera2_calibration_file: ""

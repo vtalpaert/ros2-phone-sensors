@@ -153,10 +153,10 @@ clock_offset    = t_server - (t1_client + t2_client) / 2
 Example measurement over a local WiFi network when running two video feeds, IMU and GNSS:
 
 ```txt
-Latency (N=100): mean=9.82 ms, min=2.00 ms, max=20.00 ms | Clock offset (ROS-client): mean=-291.74 ms, min=-301.50 ms, max=-283.00 ms
+Latency (N=100): mean=5.19 ms, min=1.50 ms, max=12.50 ms | Clock offset (ROS-client): mean=-293.10 ms, min=-300.00 ms, max=-285.00 ms
 ```
 
-A **negative clock offset** means the ROS clock is behind the client (phone) clock — in this case by ~292 ms. A **positive offset** would mean the ROS clock is ahead. This offset is stable across samples (spread of ~18 ms), which indicates a consistent skew rather than jitter. When timestamping sensor data, the `time/device` TimeReference topic captures this relationship explicitly.
+A **negative clock offset** means the ROS clock is behind the client (phone) clock — in this case by ~293 ms. A **positive offset** would mean the ROS clock is ahead. This offset is stable across samples (spread of ~15 ms), which indicates a consistent skew rather than jitter. When timestamping sensor data, the `time/device` TimeReference topic captures this relationship explicitly.
 
 ![Time differences (plotjuggler)](docs/plotjuggler_difference_only_running_time.png)
 We observe the same clock offset in PlotJuggler expressed in seconds, in this case measured running only `time_reference_frequency:=100.0` and no video. The offset here is the difference in clock time **plus network latency**
@@ -217,8 +217,8 @@ ros2 launch phone_sensors_bridge_examples rviz.launch.py
 - [ ] `robot_localization` example with visual-inertial odometry
 - [ ] `robot_localization` example with control feedback replacing speed odometry
 - [ ] Tests for `message_converters.py`
-- [ ] Publish `sensor_msgs/CompressedImage` on `camera1/image_raw/compressed` following the [image_transport](https://wiki.ros.org/image_transport) convention - the JPEG bytes from the browser can be placed directly into `CompressedImage.data`, skipping the current decode → numpy → OpenCV → CvBridge chain entirely
-- [ ] Switch the video channel to binary WebSocket frames to eliminate the base64 encoding overhead (~33% size reduction); pairs naturally with the `CompressedImage` change
+- [ ] Publish `sensor_msgs/CompressedImage` on `camera1/image_raw/compressed` following the [image_transport](https://wiki.ros.org/image_transport) convention - the JPEG bytes from the browser can be placed directly into `CompressedImage.data`, skipping the current decode → numpy → OpenCV → CvBridge chain entirely. This feature will only work for Kilted and Rolling using `image-transport-py`
+- [x] Switch the video channel to binary WebSocket frames to eliminate the base64 encoding overhead (~33% size reduction); pairs naturally with the `CompressedImage` change
 - [ ] SocketIO namespaces to separate video from sensor data
 - [ ] [Serial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) or Bluetooth support — phone as a bridge to a microcontroller over USB
 - [ ] Remove `debug` and `secret_key` parameters and hardcode safe defaults (`debug=False`, randomised secret); these are Flask internals that should not be exposed as ROS parameters

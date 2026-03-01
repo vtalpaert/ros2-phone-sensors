@@ -12,7 +12,7 @@ import cv_bridge
 
 from .message_converters import (
     data_to_gnss_msgs,
-    data_to_image_msg,
+    binary_to_image_msg,
     data_to_imu_msg,
     data_to_odometry_msg,
     data_to_time_reference_msg,
@@ -158,6 +158,35 @@ class ServerNode(Node):
     def log_error(self, message):
         self.get_logger().error(message)
 
+    def handle_binary_frame(self, data, camera_id):
+        if camera_id == "camera1":
+            frame_id = self.frame_id_image_camera1_param.value
+            publisher = self.video_camera1_publisher
+            camera_info_msg = self.camera1_info_msg
+            camera_info_publisher = getattr(self, 'camera1_info_publisher', None)
+        elif camera_id == "camera2":
+            frame_id = self.frame_id_image_camera2_param.value
+            publisher = self.video_camera2_publisher
+            camera_info_msg = self.camera2_info_msg
+            camera_info_publisher = getattr(self, 'camera2_info_publisher', None)
+        else:
+            self.get_logger().warning(f"Unknown camera_id: {camera_id}")
+            return
+        try:
+            ros_time = (
+                self.get_clock().now().to_msg()
+                if self.use_ros_time_param.value
+                else False
+            )
+            img_msg = binary_to_image_msg(data, ros_time, frame_id, self.bridge)
+            publisher.publish(img_msg)
+            if camera_info_msg and camera_info_publisher:
+                camera_info_msg.header.stamp = img_msg.header.stamp
+                camera_info_msg.header.frame_id = img_msg.header.frame_id
+                camera_info_publisher.publish(camera_info_msg)
+        except ValueError as e:
+            self.get_logger().warning(f"Failed to convert binary frame from {camera_id}: {str(e)}")
+
     def handle_data(self, data):
         if "video_frame" not in data and "motion" not in data:
             self.log_debug(str(data))
@@ -205,37 +234,6 @@ class ServerNode(Node):
             self.get_logger().info(
                 "Detected %s device with label %s" % (camera_id, data["device_info"]["label"])
             )
-        elif "video_frame" in data:
-            camera_id = data.get("camera_id", "camera1")
-            try:
-                if camera_id == "camera1":
-                    frame_id = self.frame_id_image_camera1_param.value
-                    publisher = self.video_camera1_publisher
-                    camera_info_msg = self.camera1_info_msg
-                    camera_info_publisher = getattr(self, 'camera1_info_publisher', None)
-                elif camera_id == "camera2":
-                    frame_id = self.frame_id_image_camera2_param.value
-                    publisher = self.video_camera2_publisher
-                    camera_info_msg = self.camera2_info_msg
-                    camera_info_publisher = getattr(self, 'camera2_info_publisher', None)
-                else:
-                    self.get_logger().warning(f"Unknown camera_id: {camera_id}")
-                    return
-
-                img_msg = data_to_image_msg(
-                    data,
-                    self.bridge,
-                    frame_id,
-                    self.get_clock().now().to_msg(),
-                )
-                publisher.publish(img_msg)
-                # Publish camera info with same timestamp if available
-                if camera_info_msg and camera_info_publisher:
-                    camera_info_msg.header.stamp = img_msg.header.stamp
-                    camera_info_msg.header.frame_id = img_msg.header.frame_id
-                    camera_info_publisher.publish(camera_info_msg)
-            except ValueError as e:
-                self.get_logger().warning(f"Failed to convert video frame from {camera_id}: {str(e)}")
         else:
             msg = data_to_time_reference_msg(
                 data,
@@ -306,6 +304,14 @@ class ServerApp:
         @self.socketio.on("data")
         def handle_data_event(data):
             self.node.handle_data(data)
+
+        @self.socketio.on("camera1_frame")
+        def handle_camera1_frame(data):
+            self.node.handle_binary_frame(data, "camera1")
+
+        @self.socketio.on("camera2_frame")
+        def handle_camera2_frame(data):
+            self.node.handle_binary_frame(data, "camera2")
 
         @self.socketio.on("latency_ping")
         def handle_latency_ping_event(data):

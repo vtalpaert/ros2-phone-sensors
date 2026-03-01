@@ -1,6 +1,6 @@
 import math
+import struct
 import yaml
-import base64
 import numpy as np
 import cv2
 
@@ -280,40 +280,28 @@ def yaml_to_camera_info(yaml_fname):
     return msg
 
 
-def data_to_image_msg(data, bridge, frame_id, ros_time):
-    """Convert base64 image data to ROS Image message"""
-    # Validate input data
-    if not data.get("video_frame"):
-        raise ValueError("Empty video frame data")
+def binary_to_image_msg(data, ros_time, frame_id, bridge):
+    """Convert binary frame (8-byte date_ms header + JPEG bytes) to ROS Image message"""
+    if len(data) <= 8:
+        raise ValueError("Binary frame too short to contain header and image data")
 
-    # Split and validate base64 data
-    parts = data["video_frame"].split(",")
-    if len(parts) != 2:
-        raise ValueError("Invalid base64 image format")
+    date_ms = struct.unpack_from('<Q', data, 0)[0]
+    jpeg_bytes = data[8:]
 
-    # Decode base64 image
-    img_data = base64.b64decode(parts[1])
-    if not img_data:
-        raise ValueError("Failed to decode base64 data")
-
-    # Convert to numpy array
-    nparr = np.frombuffer(img_data, np.uint8)
+    nparr = np.frombuffer(jpeg_bytes, np.uint8)
     if nparr.size == 0:
         raise ValueError("Empty image buffer")
 
-    # Decode image
     frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     if frame is None:
-        raise ValueError("Failed to decode image")
+        raise ValueError("Failed to decode JPEG image")
 
-    # Convert to ROS Image message
     img_msg = bridge.cv2_to_imgmsg(frame, encoding="bgr8")
-    if ros_time is None:
-        # Use the timestamp from the data
-        sec, nanosec = millisec_to_sec_nanosec(data["date_ms"])
+    if ros_time:
+        img_msg.header.stamp = ros_time
+    else:
+        sec, nanosec = millisec_to_sec_nanosec(date_ms)
         img_msg.header.stamp.sec = sec
         img_msg.header.stamp.nanosec = nanosec
-    else:
-        img_msg.header.stamp = ros_time
     img_msg.header.frame_id = frame_id
     return img_msg
