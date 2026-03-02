@@ -21,11 +21,62 @@
     <h2>Devices:</h2>
     <div id="device-list"></div>
 
+    <h2>CDC Serial — boards with native USB</h2>
+    <p>Use this for boards that connect directly over USB without a separate converter chip:
+    Teensy (any model), Arduino Leonardo, Arduino Micro, Arduino Zero, Arduino MKR series, Arduino Nano 33 IoT.
+    These boards implement the USB CDC-ACM standard, which allows direct serial communication over USB.</p>
+    <div>
+        <label for="cdc-baud">Baud rate: </label>
+        <input id="cdc-baud" type="number" value="115200">
+    </div>
+    <form id="cdc-open" method="POST" action="#">
+        <input type="submit" value="Open CDC Serial">
+    </form>
+    <form id="cdc-send" method="POST" action="#">
+        <input id="cdc-send-input" type="text" placeholder="Text to send">
+        <input type="submit" value="Send">
+    </form>
+    <form id="cdc-close" method="POST" action="#">
+        <input type="submit" value="Close CDC Serial">
+    </form>
+    <h3>CDC Received:</h3>
+    <div id="cdc-received"></div>
+
+    <h2>CP2102 — USB to UART converter</h2>
+    <p>Use this for USB-to-UART converter dongles based on the Silicon Labs CP2102 chip (vendorId 0x10c4, productId 0xea60).
+    These converters are also found on many ESP32 development boards.
+    Connect the converter's TX/RX pins to your microcontroller's RX/TX pins to bridge serial communication over USB.
+    The baud rate must match the one configured on your microcontroller.</p>
+    <div>
+        <label for="cp2-baud">Baud rate: </label>
+        <input id="cp2-baud" type="number" value="115200">
+    </div>
+    <form id="cp2-open" method="POST" action="#">
+        <input type="submit" value="Open CP2102">
+    </form>
+    <form id="cp2-send" method="POST" action="#">
+        <input id="cp2-send-input" type="text" placeholder="Text to send">
+        <input type="submit" value="Send">
+    </form>
+    <form id="cp2-close" method="POST" action="#">
+        <input type="submit" value="Close CP2102">
+    </form>
+    <h3>CP2102 Received:</h3>
+    <div id="cp2-received"></div>
+
     <h2>Log:</h2>
     <div id="log"></div>
 
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function() {
+            var selectedDevice = null;
+
+            // CDC state
+            var cdcEpIn = null, cdcEpOut = null, cdcReading = false;
+
+            // CP2102 state
+            var cp2EpIn = null, cp2EpOut = null, cp2Reading = false, cp2Buffer = "";
+
             function logMessage(text) {
                 $("#log").append("<br>" + $("<div/>").text(text).html());
             }
@@ -41,15 +92,20 @@
                 logMessage(info);
             }
 
+            // Returns a 4-byte little-endian ArrayBuffer for a baud rate
+            function baudToBytes(baud) {
+                var buf = new ArrayBuffer(4);
+                new DataView(buf).setUint32(0, baud, true);
+                return buf;
+            }
+
             if (!navigator.usb) {
                 logMessage("WebUSB is not supported in this browser.");
             } else {
                 logMessage("WebUSB is supported.");
-
                 navigator.usb.addEventListener("connect", (event) => {
                     logMessage("USB device connected: " + (event.device.productName || "(unknown)"));
                 });
-
                 navigator.usb.addEventListener("disconnect", (event) => {
                     logMessage("USB device disconnected: " + (event.device.productName || "(unknown)"));
                 });
@@ -61,43 +117,211 @@
                 logMessage("Web Serial is supported.");
             }
 
+            // ── Device selection ─────────────────────────────────────────────
+
             $("#request-device").on("submit", function(event) {
                 event.preventDefault();
-                if (!navigator.usb) {
-                    logMessage("WebUSB not supported.");
-                    return;
-                }
+                if (!navigator.usb) { logMessage("WebUSB not supported."); return; }
                 navigator.usb.requestDevice({ filters: [] })
                     .then((device) => {
+                        selectedDevice = device;
                         logMessage("Device selected by user:");
                         displayDevice(device, "selected");
                     })
-                    .catch((error) => {
-                        logMessage("Request error: " + error.toString());
-                    });
+                    .catch((error) => { logMessage("Request error: " + error.toString()); });
             });
 
             $("#list-devices").on("submit", function(event) {
                 event.preventDefault();
-                if (!navigator.usb) {
-                    logMessage("WebUSB not supported.");
-                    return;
-                }
+                if (!navigator.usb) { logMessage("WebUSB not supported."); return; }
                 $("#device-list").empty();
                 navigator.usb.getDevices()
                     .then((devices) => {
-                        if (devices.length === 0) {
-                            logMessage("No paired USB devices found.");
-                            return;
-                        }
+                        if (devices.length === 0) { logMessage("No paired USB devices found."); return; }
                         logMessage("Found " + devices.length + " paired device(s):");
-                        devices.forEach((device, index) => {
-                            displayDevice(device, "device[" + index + "]");
-                        });
+                        devices.forEach((device, index) => { displayDevice(device, "device[" + index + "]"); });
                     })
-                    .catch((error) => {
-                        logMessage("getDevices error: " + error.toString());
-                    });
+                    .catch((error) => { logMessage("getDevices error: " + error.toString()); });
+            });
+
+            // ── CDC Serial (Teensy / native USB CDC-ACM) ──────────────────────
+            // Interface 0: CDC communication (control requests)
+            // Interface 1: CDC data (bulk IN/OUT)
+
+            async function cdcReadLoop() {
+                cdcReading = true;
+                while (cdcReading) {
+                    try {
+                        const result = await selectedDevice.transferIn(cdcEpIn, 64);
+                        if (result.data && result.data.byteLength > 0) {
+                            $("#cdc-received").append("<br>" + $("<div/>").text(new TextDecoder().decode(result.data)).html());
+                        }
+                    } catch (e) {
+                        if (cdcReading) logMessage("CDC read error: " + e.toString());
+                        cdcReading = false;
+                    }
+                }
+            }
+
+            $("#cdc-open").on("submit", async function(event) {
+                event.preventDefault();
+                if (!selectedDevice) { logMessage("No device selected. Use 'Request USB device' first."); return; }
+                const baud = parseInt($("#cdc-baud").val()) || 115200;
+                try {
+                    await selectedDevice.open();
+                    await selectedDevice.selectConfiguration(1);
+                    await selectedDevice.claimInterface(0); // CDC communication
+                    await selectedDevice.claimInterface(1); // CDC data
+
+                    // SET_LINE_CODING: baud rate + 8N1
+                    const coding = new ArrayBuffer(7);
+                    const view = new DataView(coding);
+                    view.setUint32(0, baud, true); // baud rate LE
+                    view.setUint8(4, 0);           // 1 stop bit
+                    view.setUint8(5, 0);           // no parity
+                    view.setUint8(6, 8);           // 8 data bits
+                    await selectedDevice.controlTransferOut({
+                        requestType: 'class', recipient: 'interface',
+                        request: 0x20, value: 0, index: 0
+                    }, coding);
+
+                    // SET_CONTROL_LINE_STATE: raise DTR so Teensy's while(!Serial) unblocks
+                    await selectedDevice.controlTransferOut({
+                        requestType: 'class', recipient: 'interface',
+                        request: 0x22, value: 0x01, index: 0
+                    }, new ArrayBuffer(0));
+
+                    // Discover bulk endpoints on interface 1
+                    const alt = selectedDevice.configuration.interfaces[1].alternates[0];
+                    for (const ep of alt.endpoints) {
+                        if (ep.type === 'bulk' && ep.direction === 'in')  cdcEpIn  = ep.endpointNumber;
+                        if (ep.type === 'bulk' && ep.direction === 'out') cdcEpOut = ep.endpointNumber;
+                    }
+                    logMessage("CDC opened at " + baud + " baud. epIn=" + cdcEpIn + " epOut=" + cdcEpOut);
+                    cdcReadLoop();
+                } catch (e) {
+                    logMessage("CDC open error: " + e.toString());
+                }
+            });
+
+            $("#cdc-send").on("submit", async function(event) {
+                event.preventDefault();
+                if (cdcEpOut === null) { logMessage("CDC not open."); return; }
+                const text = $("#cdc-send-input").val();
+                try {
+                    await selectedDevice.transferOut(cdcEpOut, new TextEncoder().encode(text + "\n"));
+                    logMessage("CDC sent: " + text);
+                    $("#cdc-send-input").val("");
+                } catch (e) { logMessage("CDC send error: " + e.toString()); }
+            });
+
+            $("#cdc-close").on("submit", async function(event) {
+                event.preventDefault();
+                cdcReading = false;
+                try {
+                    await selectedDevice.controlTransferOut({
+                        requestType: 'class', recipient: 'interface',
+                        request: 0x22, value: 0x00, index: 0  // DTR off
+                    }, new ArrayBuffer(0));
+                    await selectedDevice.releaseInterface(1);
+                    await selectedDevice.releaseInterface(0);
+                    await selectedDevice.close();
+                    cdcEpIn = null; cdcEpOut = null;
+                    logMessage("CDC closed.");
+                } catch (e) { logMessage("CDC close error: " + e.toString()); }
+            });
+
+            // ── CP2102 Serial ────────────────────────────────────────────────
+            // Single interface 0 with bulk IN/OUT + vendor control requests
+
+            async function cp2ReadLoop() {
+                cp2Reading = true;
+                while (cp2Reading) {
+                    try {
+                        const result = await selectedDevice.transferIn(cp2EpIn, 64);
+                        if (result.data && result.data.byteLength > 0) {
+                            cp2Buffer += new TextDecoder().decode(result.data);
+                            const lines = cp2Buffer.split("\n");
+                            cp2Buffer = lines.pop(); // keep incomplete last chunk
+                            lines.forEach((line) => {
+                                const trimmed = line.replace(/\r$/, "");
+                                if (trimmed.length > 0) {
+                                    $("#cp2-received").append("<br>" + $("<div/>").text(trimmed).html());
+                                }
+                            });
+                        }
+                    } catch (e) {
+                        if (cp2Reading) logMessage("CP2102 read error: " + e.toString());
+                        cp2Reading = false;
+                    }
+                }
+            }
+
+            $("#cp2-open").on("submit", async function(event) {
+                event.preventDefault();
+                if (!selectedDevice) { logMessage("No device selected. Use 'Request USB device' first."); return; }
+                const baud = parseInt($("#cp2-baud").val()) || 115200;
+                try {
+                    await selectedDevice.open();
+                    await selectedDevice.selectConfiguration(1);
+                    await selectedDevice.claimInterface(0);
+
+                    // IFC_ENABLE: enable the UART
+                    await selectedDevice.controlTransferOut({
+                        requestType: 'vendor', recipient: 'interface',
+                        request: 0x00, value: 0x0001, index: 0
+                    }, new ArrayBuffer(0));
+
+                    // SET_BAUDRATE: 4-byte LE baud rate
+                    await selectedDevice.controlTransferOut({
+                        requestType: 'vendor', recipient: 'interface',
+                        request: 0x1E, value: 0, index: 0
+                    }, baudToBytes(baud));
+
+                    // SET_LINE_CTL: 8N1 (data bits=8 in high byte, parity=none, stop=1)
+                    await selectedDevice.controlTransferOut({
+                        requestType: 'vendor', recipient: 'interface',
+                        request: 0x03, value: 0x0800, index: 0
+                    }, new ArrayBuffer(0));
+
+                    // Discover bulk endpoints on interface 0
+                    const alt = selectedDevice.configuration.interfaces[0].alternates[0];
+                    for (const ep of alt.endpoints) {
+                        if (ep.type === 'bulk' && ep.direction === 'in')  cp2EpIn  = ep.endpointNumber;
+                        if (ep.type === 'bulk' && ep.direction === 'out') cp2EpOut = ep.endpointNumber;
+                    }
+                    logMessage("CP2102 opened at " + baud + " baud. epIn=" + cp2EpIn + " epOut=" + cp2EpOut);
+                    cp2ReadLoop();
+                } catch (e) {
+                    logMessage("CP2102 open error: " + e.toString());
+                }
+            });
+
+            $("#cp2-send").on("submit", async function(event) {
+                event.preventDefault();
+                if (cp2EpOut === null) { logMessage("CP2102 not open."); return; }
+                const text = $("#cp2-send-input").val();
+                try {
+                    await selectedDevice.transferOut(cp2EpOut, new TextEncoder().encode(text + "\n"));
+                    logMessage("CP2102 sent: " + text);
+                    $("#cp2-send-input").val("");
+                } catch (e) { logMessage("CP2102 send error: " + e.toString()); }
+            });
+
+            $("#cp2-close").on("submit", async function(event) {
+                event.preventDefault();
+                cp2Reading = false;
+                try {
+                    // IFC_DISABLE
+                    await selectedDevice.controlTransferOut({
+                        requestType: 'vendor', recipient: 'interface',
+                        request: 0x00, value: 0x0000, index: 0
+                    }, new ArrayBuffer(0));
+                    await selectedDevice.releaseInterface(0);
+                    await selectedDevice.close();
+                    cp2EpIn = null; cp2EpOut = null; cp2Buffer = "";
+                    logMessage("CP2102 closed.");
+                } catch (e) { logMessage("CP2102 close error: " + e.toString()); }
             });
         });
     </script>
