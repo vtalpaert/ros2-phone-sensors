@@ -81,7 +81,7 @@ Example measurement over a local WiFi network when running two video feeds, IMU 
 Latency (N=100): mean=5.19 ms, min=1.50 ms, max=12.50 ms | Clock offset (ROS-client): mean=-293.10 ms, min=-300.00 ms, max=-285.00 ms
 ```
 
-A **negative clock offset** means the ROS clock is behind the client (phone) clock — in this case by ~293 ms. A **positive offset** would mean the ROS clock is ahead. This offset is stable across samples (spread of ~15 ms), which indicates a consistent skew rather than jitter. When timestamping sensor data, the `time/device` TimeReference topic captures this relationship explicitly.
+A **negative clock offset** means the ROS clock is behind the client (phone) clock, in this case by ~293 ms. A **positive offset** would mean the ROS clock is ahead. This offset is stable across samples (spread of ~15 ms), which indicates a consistent skew rather than jitter. If the parameter `time_reference_frequency` is strictly positive, then the `time/device` TimeReference topic reports the clock difference including network latency.
 
 ![Time differences (plotjuggler)](docs/plotjuggler_difference_only_running_time.png)
 We observe the same clock offset in PlotJuggler expressed in seconds, in this case measured running only `time_reference_frequency:=100.0` and no video. The offset here is the difference in clock time **plus network latency**
@@ -98,9 +98,10 @@ The published `NavSatFix` and `Odometry` messages use the GNSS time, which may b
 
 - Camera device labels differ between Firefox and Chrome; the `test_video_permissions` page (linked from the home page) shows the correct `camera1_device_label` and `camera2_device_label` for your browser
 
-#### Serial / Bluetooth
+#### USB devices
 
-- The [Web Serial API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) is not supported in Firefox. On Android Chrome, it requires version 138 or later (Bluetooth RFCOMM serial only) or version 145+ for full USB serial support. Chrome 131 does not support it. Use the Web USB test page (`/test-web-usb`) to verify support on your device.
+- The [Web Serial API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) is not supported in Firefox. On Android Chrome, version 145 seems to have WebSerial available but does not work for USB devices. It might work for Bluetooth devices, which may be added as a feature if any Issue requests it. Use the test pages to verify your state.
+- For connecting USB serial devices (microcontrollers, sensors), the project uses WebUSB instead of Web Serial. See the [USB serial devices guide](docs/usb_serial_devices.md) for compatible hardware, supported chip protocols, and example code.
 
 ## `phone_sensors_bridge_examples`
 
