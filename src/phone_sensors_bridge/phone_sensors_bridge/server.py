@@ -1,4 +1,5 @@
 import os
+import queue
 import threading
 
 from flask import Flask, render_template
@@ -8,6 +9,7 @@ import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import TimeReference, Imu, NavSatFix, Image, CameraInfo
 from nav_msgs.msg import Odometry
+from std_msgs.msg import UInt8MultiArray
 import cv_bridge
 
 from .message_converters import (
@@ -39,7 +41,7 @@ class StoppableThread(threading.Thread):
 
 class ServerNode(Node):
 
-    def __init__(self):
+    def __init__(self, usb_tx_sender=None):
         super().__init__(package_name + "_node")
         self.bridge = cv_bridge.CvBridge()
         self.name_param = self.declare_parameter("name", package_name)
@@ -93,6 +95,9 @@ class ServerNode(Node):
                 ("camera2_video_width", 720),
                 ("camera2_video_height", 720),
                 ("camera2_video_compression", 0.3),
+                ("usb_enabled", False),
+                ("usb_device_type", "cdc"),  # "cdc" for native USB boards (Teensy, Leonardo), "cp2102" for USB-UART converter
+                ("usb_baud", 115200),
             ),
         )
 
@@ -107,6 +112,13 @@ class ServerNode(Node):
         self.odometry_publisher = self.create_publisher(Odometry, "gnss/odometry", 10)
         self.video_camera1_publisher = self.create_publisher(Image, "camera1/image_raw", 10)
         self.video_camera2_publisher = self.create_publisher(Image, "camera2/image_raw", 10)
+        self.usb_rx_publisher = self.create_publisher(UInt8MultiArray, "usb/rx", 10)
+        if usb_tx_sender is not None:
+            self.usb_tx_subscriber = self.create_subscription(
+                UInt8MultiArray, "usb/tx",
+                lambda msg: usb_tx_sender(bytes(msg.data)),
+                10,
+            )
 
         # Load camera calibration if file exists for camera1
         self.camera1_calibration_file = self.declare_parameter(
@@ -244,8 +256,9 @@ class ServerNode(Node):
 
 
 class ServerApp:
-    def __init__(self, node):
-        self.node = node
+    def __init__(self):
+        self._usb_tx_queue = queue.Queue()
+        self.node = ServerNode(usb_tx_sender=self._usb_tx_queue.put)
 
         # Get folders from install/ path
         template_folder = os.path.join(
@@ -329,6 +342,24 @@ class ServerApp:
                 "t_server_ms": t_server_ms,
             })
 
+        @self.socketio.on("usb_rx_data")
+        def handle_usb_rx_data(data):
+            msg = UInt8MultiArray()
+            msg.data = list(data)
+            self.node.usb_rx_publisher.publish(msg)
+
+        def usb_tx_background_worker():
+            while True:
+                self.socketio.sleep(0.005)
+                while not self._usb_tx_queue.empty():
+                    try:
+                        data = self._usb_tx_queue.get_nowait()
+                        self.socketio.emit("usb_tx_data", data, namespace="/")
+                    except queue.Empty:
+                        break
+
+        self.socketio.start_background_task(usb_tx_background_worker)
+
     def run(self):
         if not os.path.exists(
             self.node.ssl_certificate_param.value
@@ -348,17 +379,16 @@ class ServerApp:
 
 def main(args=None):
     rclpy.init(args=args)
-    node = ServerNode()
+    app = ServerApp()
     thread = StoppableThread(
-        target=rclpy.spin, args=(node,), name=package_name + "_node_thread"
+        target=rclpy.spin, args=(app.node,), name=package_name + "_node_thread"
     )
-    app = ServerApp(node)
     try:
         thread.start()
         app.run()
     finally:
         thread.stop()
-        node.destroy_node()
+        app.node.destroy_node()
         # rclpy.shutdown()
         thread.join()
 

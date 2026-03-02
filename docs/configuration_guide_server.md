@@ -32,6 +32,9 @@
 | `camera2_video_height`         | int    | 720              | pixels | Video frame height for camera2                                               |
 | `camera2_video_compression`    | float  | 0.3              | 0-1    | JPEG compression quality for camera2 (0=max compression, 1=best quality)     |
 | `camera2_calibration_file`     | string | ""               | path   | Path to camera2 calibration YAML file (output from camera_calibration)       |
+| `usb_enabled`                  | bool   | False            |        | Show the USB section on the main page and activate `usb/rx` / `usb/tx`       |
+| `usb_device_type`              | string | "cdc"            |        | USB protocol: `"cdc"` for native USB boards (Teensy, Leonardo), `"cp2102"` for USB-UART converter |
+| `usb_baud`                     | int    | 115200           | baud   | Serial baud rate sent to the USB device during connection setup               |
 
 A negative value for the time reference or IMU frequency, or a negative video FPS will disable sending the corresponding data from the client device. This allows conserving bandwidth and processing power when certain sensors are not needed.
 

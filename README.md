@@ -56,6 +56,13 @@ The page will prompt for permissions, then display the chosen camera
 | `camera2/image_raw` | `sensor_msgs/Image` | Camera 2 video stream |
 | `camera1/camera_info` | `sensor_msgs/CameraInfo` | Camera 1 calibration (only published when `camera1_calibration_file` is set) |
 | `camera2/camera_info` | `sensor_msgs/CameraInfo` | Camera 2 calibration (only published when `camera2_calibration_file` is set) |
+| `usb/rx` | `std_msgs/UInt8MultiArray` | Raw bytes received from the USB device (only active when `usb_enabled` is `True`) |
+
+### Subscribed topics
+
+| Topic | Type | Description |
+| ----- | ---- | ----------- |
+| `usb/tx` | `std_msgs/UInt8MultiArray` | Raw bytes to forward to the USB device (only active when `usb_enabled` is `True`) |
 
 ### Configuration
 
@@ -136,6 +143,7 @@ ros2 launch phone_sensors_bridge_examples rviz.launch.py
 - GNSS: position via [NavSatFix](https://docs.ros2.org/foxy/api/sensor_msgs/msg/NavSatFix.html) + ENU velocity via Odometry when heading and speed are available
 - Time synchronization between ROS, device and GNSS clocks via [TimeReference](https://docs.ros2.org/foxy/api/sensor_msgs/msg/TimeReference.html)
 - Fully configurable via ROS2 parameters; launch file examples included
+- WebUSB serial bridge: forward raw bytes between ROS2 (`usb/rx`, `usb/tx`) and a USB-connected microcontroller; supports CDC-ACM boards (Teensy, Arduino Leonardo/Micro/Zero) and CP2102 USB-UART converters; disabled by default (`usb_enabled:=False`)
 
 ## Roadmap
 
@@ -146,5 +154,6 @@ ros2 launch phone_sensors_bridge_examples rviz.launch.py
 - [ ] Publish `sensor_msgs/CompressedImage` on `camera1/image_raw/compressed` following the [image_transport](https://wiki.ros.org/image_transport) convention - the JPEG bytes from the browser can be placed directly into `CompressedImage.data`, skipping the current decode → numpy → OpenCV → CvBridge chain entirely. This feature will only work for Kilted and Rolling using `image-transport-py`
 - [x] Switch the video channel to binary WebSocket frames to eliminate the base64 encoding overhead (~33% size reduction); pairs naturally with the `CompressedImage` change
 - [ ] SocketIO namespaces to separate video from sensor data
-- [ ] [Serial](https://developer.mozilla.org/en-US/docs/Web/API/Web_Serial_API) or Bluetooth support — phone as a bridge to a microcontroller over USB
+- [x] WebUSB serial bridge — phone as a bridge to a microcontroller over USB (`usb/rx`, `usb/tx` as `std_msgs/UInt8MultiArray`)
+- [ ] Bluetooth serial support
 - [ ] Remove `debug` and `secret_key` parameters and hardcode safe defaults (`debug=False`, randomised secret); these are Flask internals that should not be exposed as ROS parameters

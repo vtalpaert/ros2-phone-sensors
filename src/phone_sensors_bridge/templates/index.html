@@ -24,6 +24,12 @@
     <video id="video-camera1" autoplay muted playsinline></video>
     <video id="video-camera2" autoplay muted playsinline></video>
 
+    <div id="usb-section" style="display:none">
+        <h2>USB Device</h2>
+        <button type="button" id="usb-connect">Connect USB device</button>
+        <button type="button" id="usb-disconnect">Disconnect</button>
+    </div>
+
     <h2>Logs:</h2>
     <div id="log"></div>
 
@@ -32,6 +38,7 @@
     <script src="{{ url_for('static', filename='geolocation.js') }}"></script>
     <script src="{{ url_for('static', filename='video.js') }}"></script>
     <script src="{{ url_for('static', filename='latency.js') }}"></script>
+    <script src="{{ url_for('static', filename='usb.js') }}"></script>
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function() {
             function logMessage(text) {
@@ -76,6 +83,7 @@
                 registerVideoFunctions(socket, document.getElementById('video-camera1'), 'camera1'); // from video.js
                 registerVideoFunctions(socket, document.getElementById('video-camera2'), 'camera2'); // from video.js
                 triggerLatency = registerLatencyMeasurement(socket, logMessage); // from latency.js
+                registerUSBFunctions(socket); // from usb.js
             });
 
 
