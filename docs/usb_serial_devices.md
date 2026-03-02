@@ -16,12 +16,16 @@ Boards with a USB controller on the main processor: Teensy 4.x / 3.x, Arduino Le
 
 Found as standalone dongles and on most ESP32 dev boards (`vendorId: 0x10c4`, `productId: 0xea60 / 0xea71`).
 
+<p align="center">
+    <img src="usbUartAdapter.jpg" alt="Example UART USB bridge" width="25%" height="auto">
+</p>
+
 **Not yet supported:** CH340 / CH9102, FTDI FT232RL.
 
 ## Test page vs. integrated bridge
 
 - **Test page** (`/test-web-usb`): standalone tool to verify hardware compatibility.
-- **Integrated bridge** (`/`, requires `usb_enabled:=True`): bytes flow as ROS2 topics:
+- **Integrated bridge** (requires `usb_enabled:=True`): bytes flow as ROS2 topics similar to the [ROS serial_driver](https://github.com/ros-drivers/transport_drivers/tree/main/serial_driver):
   - `usb/rx` (`std_msgs/UInt8MultiArray`) bytes from the USB device
   - `usb/tx` (`std_msgs/UInt8MultiArray`) bytes to the USB device
 

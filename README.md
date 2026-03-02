@@ -1,8 +1,12 @@
-# Use your phone as a sensor in ROS2
+# Use your phone as a sensor bridge in ROS2
 
-While many projects exist to control your robot from your phone, this project is the other way around; your phone is the robot' sensors ! It will send the camera feed, IMU and GPS so that you may integrate the phone onto a mobile base.
+Turn your phone's GPS, IMU and cameras into ROS2 sensors. Connect an Arduino over USB to close the control loop. No custom app, just a browser.
 
-The particularity of this project is that it relies on the mobile browser instead of a specific app. A webpage is served from the ROS2 node, opening the page from a mobile client will ask for permissions in the browser. The data is transmitted between the server and client using websockets for a modern and fast communication, as opposed to making HTTP requests or streaming UDP.
+**Sensor-only use case** (e.g. VSLAM, localization): mount the phone on a robot or handheld rig. It streams camera, IMU and GPS into ROS2 topics, ready for `robot_localization`, ORB-SLAM3, or any visual-inertial pipeline.
+
+**Full mobile robot use case**: connect an Arduino or Teensy to the phone over USB. The phone relays commands from ROS2 down to the microcontroller (motor drivers, servos, ...) while simultaneously streaming sensors upward. Your robot only needs firmware for low-level actuation, the phone handles perception and communication.
+
+The bridge relies on the mobile browser rather than a dedicated app. A webpage is served from the ROS2 node; opening it on the phone prompts for permissions and starts streaming over WebSockets.
 
 This repository is inspired by a project I did with students as a TA called [phone-imu](https://github.com/vtalpaert/phone-imu).
 
@@ -137,7 +141,7 @@ ros2 launch phone_sensors_bridge_examples rviz.launch.py
 
 ## Features
 
-- Browser-based, no app required — works with Firefox and Chrome on Android
+- Browser-based, no app required. Works with Firefox and Chrome on Android
 - Up to 2 simultaneous camera streams with configurable resolution, FPS and compression; camera calibration support via [CameraInfo](https://docs.ros2.org/foxy/api/sensor_msgs/msg/CameraInfo.html)
 - IMU: orientation (ENU quaternion), angular velocity, linear acceleration via [Imu](https://docs.ros2.org/foxy/api/sensor_msgs/msg/Imu.html)
 - GNSS: position via [NavSatFix](https://docs.ros2.org/foxy/api/sensor_msgs/msg/NavSatFix.html) + ENU velocity via Odometry when heading and speed are available
@@ -153,7 +157,6 @@ ros2 launch phone_sensors_bridge_examples rviz.launch.py
 - [ ] Tests for `message_converters.py`
 - [ ] Publish `sensor_msgs/CompressedImage` on `camera1/image_raw/compressed` following the [image_transport](https://wiki.ros.org/image_transport) convention - the JPEG bytes from the browser can be placed directly into `CompressedImage.data`, skipping the current decode → numpy → OpenCV → CvBridge chain entirely. This feature will only work for Kilted and Rolling using `image-transport-py`
 - [x] Switch the video channel to binary WebSocket frames to eliminate the base64 encoding overhead (~33% size reduction); pairs naturally with the `CompressedImage` change
-- [ ] SocketIO namespaces to separate video from sensor data
-- [x] WebUSB serial bridge — phone as a bridge to a microcontroller over USB (`usb/rx`, `usb/tx` as `std_msgs/UInt8MultiArray`)
+- [x] WebUSB serial bridge to microcontroller over USB (`usb/rx`, `usb/tx` as `std_msgs/UInt8MultiArray`)
 - [ ] Bluetooth serial support
 - [ ] Remove `debug` and `secret_key` parameters and hardcode safe defaults (`debug=False`, randomised secret); these are Flask internals that should not be exposed as ROS parameters
