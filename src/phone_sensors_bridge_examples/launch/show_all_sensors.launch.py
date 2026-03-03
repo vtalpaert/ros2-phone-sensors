@@ -9,7 +9,7 @@ def generate_launch_description():
     server_config_file = os.path.join(
         get_package_share_directory("phone_sensors_bridge_examples"),
         "config",
-        "server_params_for_phone_sensors.yaml",
+        "server_params_for_all_sensors.yaml",
     )
 
     return LaunchDescription(
@@ -25,7 +25,8 @@ def generate_launch_description():
                 ],
                 remappings=[
                     ("imu", "phone_sensors_bridge/imu"),
-                    ("gnss", "phone_sensors_bridge/gps"),
+                    ("gnss", "phone_sensors_bridge/gps/fix"),
+                    ("gnss/odometry", "phone_sensors_bridge/gps/odometry"),
                 ],
             ),
             Node(
@@ -33,12 +34,6 @@ def generate_launch_description():
                 executable="static_transform_publisher",
                 name="gnss_tf",
                 arguments=["0", "0", "0", "0", "0", "0", "base_link", "gnss"],
-            ),
-            Node(
-                package="tf2_ros",
-                executable="static_transform_publisher",
-                name="imu_tf",
-                arguments=["0", "0", "0", "0", "0", "0", "base_link", "imu"],
             ),
             Node(
                 package="rviz2",

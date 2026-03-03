@@ -13,20 +13,20 @@ phone_sensors_bridge_server:
     time_reference_frequency: -1.0
     imu_frequency: 50.0
     gnss_watch_position: true
-    frame_id_imu: "imu"
+    frame_id_imu: "base_link"
     frame_id_gnss: "gnss"
     frame_id_image_camera1: "camera1"
     frame_id_image_camera2: "camera2"
     camera1_device_label: "camera 1, facing front"
     camera1_video_fps: 20.0
-    camera1_video_width: 720
-    camera1_video_height: 720
+    camera1_video_width: 640
+    camera1_video_height: 480
     camera1_video_compression: 0.3
     camera1_calibration_file: ""
     camera2_device_label: "camera 0, facing back"
     camera2_video_fps: 20.0
-    camera2_video_width: 720
-    camera2_video_height: 720
+    camera2_video_width: 480
+    camera2_video_height: 640
     camera2_video_compression: 0.3
     camera2_calibration_file: ""
     usb_enabled: false
