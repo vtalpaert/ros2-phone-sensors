@@ -8,7 +8,7 @@ def generate_launch_description():
     server_config_file = os.path.join(
         get_package_share_directory("phone_sensors_bridge_examples"),
         "config",
-        "phone_sensors_bridge_server.yaml",
+        "server_params_for_phone_sensors.yaml",
     )
 
     localization_config_file = os.path.join(
@@ -28,6 +28,7 @@ def generate_launch_description():
                 remappings=[
                     ("imu", "phone_sensors_bridge/imu"),
                     ("gnss", "phone_sensors_bridge/gps"),
+                    ("gnss/odometry", "phone_sensors_bridge/gps/odometry"),
                 ],
             ),
             Node(
@@ -40,7 +41,7 @@ def generate_launch_description():
                     ("imu/data", "phone_sensors_bridge/imu"),
                     ("imu", "phone_sensors_bridge/imu"),
                     ("gps/fix", "phone_sensors_bridge/gps"),
-                    ("odometry/gps", "phone_sensors_bridge/odometry"),
+                    ("odometry/gps", "phone_sensors_bridge/navsat/odometry"),
                     ("odometry/filtered", "odometry/global"),
                 ],
             ),

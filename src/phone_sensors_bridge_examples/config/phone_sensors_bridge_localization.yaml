@@ -1,13 +1,13 @@
 navsat_transform_node:
   ros__parameters:
     frequency: 10.0
-    delay: 5.0
+    delay: 10.0
     magnetic_declination_radians: 0.0  # IMU provides absolute orientation to ENU
     yaw_offset: 0.0  # IMU is in ENU
     zero_altitude: false
-    broadcast_utm_transform: true
     publish_filtered_gps: true
-    use_odometry_yaw: false  # This should use the absolute orientation from the IMU message, but it does not seem to work
+    broadcast_utm_transform: true
+    use_odometry_yaw: false  # Use absolute orientation from IMU
     wait_for_datum: false  # Will create datum automatically from first GPS message
     datum: ""  # Empty string means no manual datum
 
@@ -26,7 +26,7 @@ ukf_filter_node_map:
     base_link_frame: base_link
     world_frame: map
 
-    odom0: phone_sensors_bridge/odometry
+    odom0: phone_sensors_bridge/datum/odometry
     odom0_config: [true,  true,  true,
                   false, false, false,
                   false, false, false,
@@ -82,3 +82,5 @@ ukf_filter_node_odom:
 
     publish_tf: true
     use_control: false
+
+    dynamic_process_noise_covariance: true

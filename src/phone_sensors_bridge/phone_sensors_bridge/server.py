@@ -81,15 +81,15 @@ class ServerNode(Node):
                 ("gnss_watch_position", True),  # True enables GNSS via watchPosition, False disables GNSS
                 (
                     "camera1_device_label",
-                    "camera2 1, facing front",
-                ),  # In Firefox, use Facing front:1 and in Chrome use camera2 1
+                    "camera 1, facing front",
+                ),  # In Firefox, use Facing front:1 and in Chrome use camera 1, facing front
                 ("camera1_video_fps", 20.0),
                 ("camera1_video_width", 720),  # Default to 720p resolution (horizontal)
                 ("camera1_video_height", 720),  # Default to 720p resolution (vertical)
                 ("camera1_video_compression", 0.3),
                 (
                     "camera2_device_label",
-                    "camera2 0, facing back",
+                    "camera 0, facing back",
                 ),  # Second camera device label
                 ("camera2_video_fps", 20.0),
                 ("camera2_video_width", 720),
@@ -366,6 +366,7 @@ class ServerApp:
         ) or not os.path.exists(self.node.ssl_private_key_param.value):
             print("Missing SSL certificates")
         else:
+            print("Found SSL certificates. Starting server")
             self.socketio.run(
                 self.app,
                 self.node.host_param.value,

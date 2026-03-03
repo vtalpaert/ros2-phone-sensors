@@ -1,3 +1,4 @@
+# These server parameters are used to visualize the phone sensors in RViz.
 phone_sensors_bridge_server:
   ros__parameters:
     host: "0.0.0.0"
@@ -16,15 +17,18 @@ phone_sensors_bridge_server:
     frame_id_gnss: "gnss"
     frame_id_image_camera1: "camera1"
     frame_id_image_camera2: "camera2"
-    camera1_device_label: "camera2 1, facing front"
+    camera1_device_label: "camera 1, facing front"
     camera1_video_fps: 20.0
     camera1_video_width: 720
     camera1_video_height: 720
     camera1_video_compression: 0.3
     camera1_calibration_file: ""
-    camera2_device_label: "camera2 0, facing back"
+    camera2_device_label: "camera 0, facing back"
     camera2_video_fps: 20.0
     camera2_video_width: 720
     camera2_video_height: 720
     camera2_video_compression: 0.3
     camera2_calibration_file: ""
+    usb_enabled: false
+    usb_device_type: "cdc"
+    usb_baud": 115200
