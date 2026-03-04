@@ -52,10 +52,20 @@ function registerGeolocationPublisher(socket, window) {
         socket.sendBuffer = [];  // empty buffer to stop sending
     };
 
-    // gnss_watch_position: true starts the watchPosition loop (enables GNSS), false stops it.
+    var pendingGnssWatch = false;
+
+    // gnss_watch_position: true enables GNSS, false disables it.
     socket.on("gnss_watch_position", function (value) {
+        pendingGnssWatch = value;
+    });
+
+    socket.on("stream_stop", function () {
         geolocationStopSending();
-        if (value) {
+    });
+
+    socket.on("stream_start", function () {
+        geolocationStopSending();
+        if (pendingGnssWatch) {
             geolocationStartSending();
         }
     });

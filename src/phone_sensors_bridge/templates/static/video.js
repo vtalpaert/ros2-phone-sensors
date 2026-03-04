@@ -180,34 +180,48 @@ function registerVideoFunctions(socket, videoElement, cameraId) {
         socket.emit("error", cameraId + " getUserMedia error: " + error.name + " - " + error.message + " (" + error.toString() + ")");
     }
 
-    socket.on(cameraId + "_device_label", function (label, cb) {
-        socket.emit("info", cameraId + " you selected device with label " + label);
+    socket.on(cameraId + "_device_label", function (label) {
+        socket.emit("info", cameraId + " device label received: " + label);
         videoLabel = label;
-        socket.emit("debug", cameraId + " videoLabel set to: '" + videoLabel + "'");
-        // Initial delay to ensure we receive parameters
-        setTimeout(() => {
-            socket.emit("debug", cameraId + " starting camera setup sequence after 1000ms delay");
-            getStream()
-                .then(() => {
-                    socket.emit("debug", cameraId + " first getStream completed, calling getDevices");
-                    return getDevices();
-                })
-                .then(devices => {
-                    socket.emit("debug", cameraId + " getDevices completed, calling gotDevices");
-                    return gotDevices(devices);
-                })
-                .then(() => {
-                    let waitTime = 1000;
-                    socket.emit("info", cameraId + " waiting " + waitTime + "ms to restart video with your label");
-                    return new Promise(resolve => setTimeout(resolve, waitTime));
-                })
-                .then(() => {
-                    socket.emit("debug", cameraId + " after wait, calling getStream again with videoSource=" + videoSource);
-                    return getStream();
-                })
-                .catch(error => {
-                    socket.emit("error", cameraId + " error in camera setup sequence: " + error.toString());
-                });
-        }, 1000);
+    });
+
+    socket.on("stream_stop", function () {
+        socket.emit("debug", cameraId + " stream_stop received");
+        if (captureLoop !== 0) {
+            clearInterval(captureLoop);
+            captureLoop = 0;
+        }
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+            localStream = null;
+        }
+        videoElement.style.display = 'none';
+        videoElement.dataset.firstStreamOpened = 'false';
+    });
+
+    socket.on("stream_start", function () {
+        if (!videoLabel || localVideoFps <= 0) return;
+        socket.emit("debug", cameraId + " starting camera setup (stream_start)");
+        getStream()
+            .then(() => {
+                socket.emit("debug", cameraId + " first getStream completed, calling getDevices");
+                return getDevices();
+            })
+            .then(devices => {
+                socket.emit("debug", cameraId + " getDevices completed, calling gotDevices");
+                return gotDevices(devices);
+            })
+            .then(() => {
+                let waitTime = 1000;
+                socket.emit("info", cameraId + " waiting " + waitTime + "ms to restart video with label");
+                return new Promise(resolve => setTimeout(resolve, waitTime));
+            })
+            .then(() => {
+                socket.emit("debug", cameraId + " after wait, calling getStream again with videoSource=" + videoSource);
+                return getStream();
+            })
+            .catch(error => {
+                socket.emit("error", cameraId + " error in camera setup: " + error.toString());
+            });
     });
 }

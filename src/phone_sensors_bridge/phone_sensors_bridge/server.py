@@ -2,6 +2,7 @@ import os
 import queue
 import threading
 
+import eventlet
 from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 
@@ -49,7 +50,7 @@ class ServerNode(Node):
 
         self.host_param = self.declare_parameter("host", "0.0.0.0")
         self.port_param = self.declare_parameter("port", 2000)
-        self.debug_param = self.declare_parameter("debug", True)
+        self.debug_param = self.declare_parameter("debug", False)
         self.secret_key_param = self.declare_parameter("secret_key", "secret!")
         self.ssl_certificate_param = self.declare_parameter(
             "ssl_certificate", "certs/certificate.crt"
@@ -299,12 +300,19 @@ class ServerApp:
 
         @self.socketio.on("connect")
         def handle_connect_event():
+            sleep_time = 0.1  # Short delay to ensure parameters are processed before starting stream
+            # Stop any ongoing streams before reconfiguring
+            emit("stream_stop")
+            eventlet.sleep(sleep_time)
             # Configure client based on ROS parameters
             for param in self.node.client_params:
                 emit(
                     param.name,
                     param.value,
                 )
+            eventlet.sleep(sleep_time)
+            # Signal client that all parameters have been delivered
+            emit("stream_start")
 
         @self.socketio.on("debug")
         def handle_debug_event(message):

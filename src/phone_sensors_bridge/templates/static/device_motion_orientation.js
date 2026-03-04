@@ -105,11 +105,20 @@ function registerDeviceMotionOrientationPublisher(socket, window) {
         socket.sendBuffer = [];  // empty buffer to stop sending
     };
 
-    socket.on("imu_frequency", function (value, cb) {
+    var pendingImuInterval = null;
+
+    socket.on("imu_frequency", function (value) {
+        pendingImuInterval = value > 0 ? Math.floor(1000 / value) : null;
+    });
+
+    socket.on("stream_stop", function () {
         deviceMotionOrientationStopSending();
-        if (value > 0) {
-            const interval = Math.floor(1000 / value);  // convert Hz to ms
-            deviceMotionOrientationStartSending(interval);
+    });
+
+    socket.on("stream_start", function () {
+        deviceMotionOrientationStopSending();
+        if (pendingImuInterval !== null) {
+            deviceMotionOrientationStartSending(pendingImuInterval);
         }
     });
 }

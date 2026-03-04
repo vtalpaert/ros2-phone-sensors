@@ -11,8 +11,6 @@ Panels:
         - /Camera11/Topic1
         - /Odometry1
         - /Odometry1/Covariance1
-        - /Odometry1/Covariance1/Position1
-        - /Odometry1/Covariance1/Orientation1
       Splitter Ratio: 0.5
     Tree Height: 917
   - Class: rviz_common/Selection

@@ -72,21 +72,58 @@
                 if (triggerLatency) triggerLatency();
             });
 
+            // Screen Wake Lock: prevent screen from blanking while connected
+            var wakeLock = null;
+            async function requestWakeLock() {
+                if ('wakeLock' in navigator) {
+                    try {
+                        wakeLock = await navigator.wakeLock.request('screen');
+                        wakeLock.addEventListener('release', function() {
+                            wakeLock = null;
+                        });
+                    } catch (err) {
+                        console.warn('Wake lock request failed: ' + err.message);
+                    }
+                }
+            }
+            // Re-acquire wake lock when page becomes visible again (lock is auto-released on hide)
+            document.addEventListener('visibilitychange', function() {
+                if (document.visibilityState === 'visible' && socket.connected) {
+                    requestWakeLock();
+                }
+            });
+
+            // Register publishers once so listeners are not duplicated on reconnect
+            registerTimeReferencePublisher(socket); // from time_reference.js
+            registerDeviceMotionOrientationPublisher(socket, window); // from device_motion_orientation.js
+            registerGeolocationPublisher(socket, window); // from geolocation.js
+            registerVideoFunctions(socket, document.getElementById('video-camera1'), 'camera1'); // from video.js
+            registerVideoFunctions(socket, document.getElementById('video-camera2'), 'camera2'); // from video.js
+            triggerLatency = registerLatencyMeasurement(socket, logMessage); // from latency.js
+            registerUSBFunctions(socket); // from usb.js
+
             socket.on("connect", function() {
                 socket.emit("info", "Connected to server");
                 logMessage("Connected to server");
-                
-                // Register all publishers AFTER socket connection is established
-                registerTimeReferencePublisher(socket); // from time_reference.js
-                registerDeviceMotionOrientationPublisher(socket, window); // from device_motion_orientation.js
-                registerGeolocationPublisher(socket, window); // from geolocation.js
-                registerVideoFunctions(socket, document.getElementById('video-camera1'), 'camera1'); // from video.js
-                registerVideoFunctions(socket, document.getElementById('video-camera2'), 'camera2'); // from video.js
-                triggerLatency = registerLatencyMeasurement(socket, logMessage); // from latency.js
-                registerUSBFunctions(socket); // from usb.js
+                requestWakeLock();
             });
 
+            socket.on("disconnect", function() {
+                logMessage("Disconnected from server");
+                if (wakeLock) {
+                    wakeLock.release();
+                }
+            });
 
+            socket.on("stream_stop", function () {
+                socket.emit("info", "Stream stopped by server");
+                logMessage("Stream stopped by server");
+            });
+
+            socket.on("stream_start", function () {
+                socket.emit("info", "Stream started by server");
+                logMessage("Stream started by server");
+            });
         });
     </script>
 

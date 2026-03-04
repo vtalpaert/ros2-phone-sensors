@@ -16,11 +16,20 @@ function registerTimeReferencePublisher(socket) {
         socket.sendBuffer = [];  // empty buffer to stop sending
     };
 
-    socket.on("time_reference_frequency", function(value, cb) {
+    var pendingTimeReferenceInterval = null;
+
+    socket.on("time_reference_frequency", function(value) {
+        pendingTimeReferenceInterval = value > 0 ? Math.floor(1000 / value) : null;
+    });
+
+    socket.on("stream_stop", function () {
         timeReferenceStopSending();
-        if (value > 0) {
-            const interval = Math.floor(1000 / value);  // convert Hz to ms
-            timeReferenceStartSending(interval);
+    });
+
+    socket.on("stream_start", function () {
+        timeReferenceStopSending();
+        if (pendingTimeReferenceInterval !== null) {
+            timeReferenceStartSending(pendingTimeReferenceInterval);
         }
     });
 }
