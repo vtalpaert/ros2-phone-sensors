@@ -20,16 +20,16 @@ Found as standalone dongles and on most ESP32 dev boards (`vendorId: 0x10c4`, `p
     <img src="usbUartAdapter.jpg" alt="Example UART USB bridge" width="25%" height="auto">
 </p>
 
-**Not yet supported:** CH340 / CH9102, FTDI FT232RL.
+**Not supported:** CH340 / CH9102, FTDI FT232RL.
 
-## Test page vs. integrated bridge
+## Testing
 
 - **Test page** (`/test-web-usb`): standalone tool to verify hardware compatibility.
 - **Integrated bridge** (requires `usb_enabled:=True`): bytes flow as ROS2 topics similar to the [ROS serial_driver](https://github.com/ros-drivers/transport_drivers/tree/main/serial_driver):
   - `usb/rx` (`std_msgs/UInt8MultiArray`) bytes from the USB device
   - `usb/tx` (`std_msgs/UInt8MultiArray`) bytes to the USB device
 
-## Example sketch (Teensy / Arduino with native USB)
+### Test sketch
 
 Sends a periodic heartbeat and echoes back anything received. Also bridges to UART (for CP2102 testing).
 
@@ -65,21 +65,19 @@ void loop() {
 }
 ```
 
-## Testing
+### Test in browser
 
-### Test page
-
-1. Flash the sketch, open `/test-web-usb` in Chrome on Android
-2. Press **Request USB device** and select your board
+1. Flash the sketch and connect your board to the phone using an OTG converter. Use the native USB or UART converter depending on your board version (see above)
+2. Follow the link to the test page `/test-web-usb` in Chrome (will not work with Firefox). Press **Request USB device** and select your board in the dialog
 3. Use the **CDC Serial** section for native USB boards, **CP2102 Serial** for adapters
 4. Set baud rate to 115200, press **Open**, heartbeat messages should appear
 5. Type a message and press **Send**, you should receive the echo back
 
-### Integrated bridge (ROS2)
+### Test with command line (ROS2)
 
 No firmware change needed from the test above.
 
-1. Start the server:
+1. Start the server and adapt command for device type:
 
    ```bash
    ros2 run phone_sensors_bridge server --ros-args -p usb_enabled:=true -p usb_device_type:=cdc -p usb_baud:=115200
@@ -100,3 +98,12 @@ No firmware change needed from the test above.
    ```
 
 6. The board echoes `Echo USB: Hello\r\n` back on `usb/rx`
+
+> Some bytes might differ when the Arduino code adds a `\r` or `\n`.
+
+## Usage with [SerialTransfer](https://github.com/PowerBroker2/SerialTransfer)
+
+Serial communication over USB is a stream, therefore defining a message start and end, even length all depend on a choice of protocol.
+We recommend using [SerialTransfer](https://github.com/PowerBroker2/SerialTransfer) for the error correction. For simplicity, [robust serial](https://github.com/araffin/arduino-robust-serial) is a good alternative.
+
+For further examples, see how to [Bridge ROS2 to an arduino robot using the phone USB](arduino_robot.md)
