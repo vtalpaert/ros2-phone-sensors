@@ -3,7 +3,7 @@ certs/
 install/
 log/
 __pycache__
-.aider*
+.vscode
 .env
 *.tar.gz
 ost.txt
