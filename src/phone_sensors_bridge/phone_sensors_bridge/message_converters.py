@@ -58,7 +58,7 @@ def data_to_time_reference_msg(data, ros_time, source):
     return msg
 
 
-def data_to_imu_msg(data, ros_time, frame_id):
+def data_to_imu_msg(data, ros_time, frame_id, orientation_covariance, angular_velocity_covariance, linear_acceleration_covariance):
     # Typical input {'date_ms': 1746375486895,
     # 'motion': {'ax': 0.44434577226638794, 'ay': -0.5894360542297363, 'az': 2.010622024536133,
     # 'rb': 13.755000114440918, 'rg': 20.96500015258789, 'ra': -55.05500030517578,
@@ -97,7 +97,7 @@ def data_to_imu_msg(data, ros_time, frame_id):
     msg.orientation.y = float(qy)
     msg.orientation.z = float(qz)
     msg.orientation.w = float(qw)
-    msg.orientation_covariance = 9 * [0.0]
+    msg.orientation_covariance = orientation_covariance
 
     # Rotation rate is in deg/sec, in the device coordinates frame
     # alpha around z, beta around x, gamma around y
@@ -107,13 +107,13 @@ def data_to_imu_msg(data, ros_time, frame_id):
     msg.angular_velocity.x = float(math.radians(rotation_beta))
     msg.angular_velocity.y = float(math.radians(rotation_gamma))
     msg.angular_velocity.z = float(math.radians(rotation_alpha))
-    msg.angular_velocity_covariance = 9 * [0.0]
+    msg.angular_velocity_covariance = angular_velocity_covariance
 
     # Acceleration is in m/s2, in the device coordinates frame
     msg.linear_acceleration.x = float(data["motion"]["ax"])
     msg.linear_acceleration.y = float(data["motion"]["ay"])
     msg.linear_acceleration.z = float(data["motion"]["az"])
-    msg.linear_acceleration_covariance = 9 * [0.0]
+    msg.linear_acceleration_covariance = linear_acceleration_covariance
     return msg
 
 

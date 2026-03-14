@@ -72,6 +72,14 @@ class ServerNode(Node):
             self.declare_parameter("time_reference_source_gnss", "device_to_gnss")
         )
 
+        # IMU covariance parameters (from calibration script imu_gaussian_noise.py)
+        self.imu_k_inflation_param = self.declare_parameter("imu_k_inflation", 10.0)                                  # safety factor
+        self.imu_gyro_noise_density_param = self.declare_parameter("imu_gyro_noise_density", 7e-05)               # rad/s/sqrt(Hz)
+        self.imu_gyro_quantization_variance_param = self.declare_parameter("imu_gyro_quantization_variance", 3e-07)  # rad²  (q²/12)
+        self.imu_accel_noise_density_param = self.declare_parameter("imu_accel_noise_density", 2e-04)             # m/s²/sqrt(Hz)
+        self.imu_accel_quantization_variance_param = self.declare_parameter("imu_accel_quantization_variance", 9e-04)  # (m/s²)²  (q²/12)
+        self.imu_orient_variance_param = self.declare_parameter("imu_orient_variance", 2e-06)                     # rad²  (var_measured + var_quant)
+
         # Declare all parameters to send to the client
         # Intervals are in [ms]
         self.client_params = self.declare_parameters(
@@ -101,6 +109,15 @@ class ServerNode(Node):
                 ("usb_baud", 115200),
             ),
         )
+
+        fs = self.get_parameter("imu_frequency").value
+        k = self.imu_k_inflation_param.value
+        gyro_var = k * fs * self.imu_gyro_noise_density_param.value ** 2 + self.imu_gyro_quantization_variance_param.value
+        accel_var = k * fs * self.imu_accel_noise_density_param.value ** 2 + self.imu_accel_quantization_variance_param.value
+        orient_var = self.imu_orient_variance_param.value
+        self._angular_velocity_covariance = [gyro_var, 0.0, 0.0, 0.0, gyro_var, 0.0, 0.0, 0.0, gyro_var]
+        self._linear_acceleration_covariance = [accel_var, 0.0, 0.0, 0.0, accel_var, 0.0, 0.0, 0.0, accel_var]
+        self._orientation_covariance = [orient_var, 0.0, 0.0, 0.0, orient_var, 0.0, 0.0, 0.0, orient_var]
 
         self.time_reference_device_publisher = self.create_publisher(
             TimeReference, "time/device", 10
@@ -236,7 +253,12 @@ class ServerNode(Node):
                 else False
             )
             try:
-                msg = data_to_imu_msg(data, ros_time, self.frame_id_imu_param.value)
+                msg = data_to_imu_msg(
+                    data, ros_time, self.frame_id_imu_param.value,
+                    self._orientation_covariance,
+                    self._angular_velocity_covariance,
+                    self._linear_acceleration_covariance,
+                )
                 self.imu_publisher.publish(msg)
             except (TypeError, ValueError) as e:
                 self.get_logger().warning(
