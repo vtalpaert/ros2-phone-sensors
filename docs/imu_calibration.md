@@ -9,19 +9,22 @@ The noise density drives the IMU covariance in the EKF; the bias is used by sens
 Using a discretized model, the per-sample covariance for gyro and accel is:
 
 ```math
-cov_{imu} = k_{inflation} \times f_{IMU} \times \sigma_{noise-density}^2 + \frac{q^2}{12}
+cov_{imu} = \texttt{imu\_k\_inflation} \times f_{IMU} \times \sigma_{noise-density}^2 + \frac{q^2}{12}
 ```
 
-- `k_inflation = 10`, safety factor recommended for low-cost sensors such as phone IMUs ([Kalibr wiki](https://github.com/ethz-asl/kalibr/wiki/IMU-Noise-Model#kalibr-imu-noise-parameters-in-practice))
-- `f_IMU`, sampling frequency, set at runtime
-- `sigma_noise_density`, sensor constant measured once
-- `q²/12`, quantization noise, fixed regardless of frequency
+- `imu_k_inflation`, safety factor recommended for low-cost sensors such as phone IMUs ([Kalibr wiki](https://github.com/ethz-asl/kalibr/wiki/IMU-Noise-Model#kalibr-imu-noise-parameters-in-practice)), default 10
+- `f_IMU`, sampling frequency (`imu_frequency`), set at runtime
+- `sigma_noise_density`, sensor constant measured once (`imu_gyro_noise_density` / `imu_accel_noise_density`)
+- `q²/12`, quantization noise, fixed regardless of frequency (`imu_gyro_quantization_variance` / `imu_accel_quantization_variance`)
 
-Orientation (already fused by the phone) uses a single fixed variance:
+Orientation (already fused by the phone) uses a single fixed variance scaled by an inflation factor:
 
 ```math
-cov_{orient} = \sigma_{measured}^2 + \frac{q^2}{12}
+cov_{orient} = \texttt{imu\_orient\_inflation} \times \texttt{imu\_orient\_variance}
 ```
+
+- `imu_orient_variance`, total orientation variance (measured variance + quantization variance), measured once
+- `imu_orient_inflation`, safety inflation factor, default 10
 
 ## Why not Allan variance
 
@@ -152,7 +155,7 @@ Dynamic bag: rosbag2_2026_03_11-17_09_12/
   Both sources are independent → variances sum (do not take max).
 
 ============================================================
-  Suggested values for message_converters.py
+  Suggested server parameter values (see configuration_guide_server.md)
 ============================================================
 
   GYROSCOPE  [rad/s]

@@ -14,7 +14,12 @@ phone_sensors_bridge_server:
     imu_frequency: 50.0
     gnss_watch_position: true
     frame_id_imu: "base_link"
-    frame_id_gnss: "gnss"
+    frame_id_gnss: "base_link"
+    frame_id_gnss_velocity: "odom"
+    imu_orient_inflation: 10.0
+    gnss_position_inflation: 10.0
+    gnss_speed_variance: 0.01
+    gnss_zero_velocity_variance: 0.001
     frame_id_image_camera1: "camera1"
     frame_id_image_camera2: "camera2"
     camera1_device_label: "camera 1, facing front"

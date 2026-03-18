@@ -66,6 +66,7 @@ class ServerNode(Node):
         )
         self.frame_id_imu_param = self.declare_parameter("frame_id_imu", name+ "_imu")
         self.frame_id_gnss_param = self.declare_parameter("frame_id_gnss", name+ "_gnss")
+        self.frame_id_gnss_velocity_param = self.declare_parameter("frame_id_gnss_velocity", name + "_odom")
         self.frame_id_image_camera1_param = self.declare_parameter("frame_id_image_camera1", name + "_camera1")
         self.frame_id_image_camera2_param = self.declare_parameter("frame_id_image_camera2", name + "_camera2")
         self.time_reference_source_gnss_param = self.source_time_reference_param = (
@@ -79,6 +80,10 @@ class ServerNode(Node):
         self.imu_accel_noise_density_param = self.declare_parameter("imu_accel_noise_density", 2e-04)             # m/s²/sqrt(Hz)
         self.imu_accel_quantization_variance_param = self.declare_parameter("imu_accel_quantization_variance", 9e-04)  # (m/s²)²  (q²/12)
         self.imu_orient_variance_param = self.declare_parameter("imu_orient_variance", 2e-06)                     # rad²  (var_measured + var_quant)
+        self.imu_orient_inflation_param = self.declare_parameter("imu_orient_inflation", 10.0)                    # safety factor on orientation variance
+        self.gnss_position_inflation_param = self.declare_parameter("gnss_position_inflation", 10.0)              # safety factor on GPS position/altitude variance
+        self.gnss_speed_variance_param = self.declare_parameter("gnss_speed_variance", 0.01)                      # (m/s)², GPS speed variance for case 1
+        self.gnss_zero_velocity_variance_param = self.declare_parameter("gnss_zero_velocity_variance", 0.001)     # (m/s)², zero-velocity update variance for case 2
 
         # Declare all parameters to send to the client
         # Intervals are in [ms]
@@ -114,7 +119,7 @@ class ServerNode(Node):
         k = self.imu_k_inflation_param.value
         gyro_var = k * fs * self.imu_gyro_noise_density_param.value ** 2 + self.imu_gyro_quantization_variance_param.value
         accel_var = k * fs * self.imu_accel_noise_density_param.value ** 2 + self.imu_accel_quantization_variance_param.value
-        orient_var = self.imu_orient_variance_param.value
+        orient_var = self.imu_orient_inflation_param.value * self.imu_orient_variance_param.value
         self._angular_velocity_covariance = [gyro_var, 0.0, 0.0, 0.0, gyro_var, 0.0, 0.0, 0.0, gyro_var]
         self._linear_acceleration_covariance = [accel_var, 0.0, 0.0, 0.0, accel_var, 0.0, 0.0, 0.0, accel_var]
         self._orientation_covariance = [orient_var, 0.0, 0.0, 0.0, orient_var, 0.0, 0.0, 0.0, orient_var]
@@ -234,11 +239,14 @@ class ServerNode(Node):
                     ros_time,
                     self.frame_id_gnss_param.value,
                     self.time_reference_source_gnss_param.value,
+                    self.gnss_position_inflation_param.value,
                 )
                 self.gnss_publisher.publish(fix)
                 self.time_reference_gnss_publisher.publish(time)
                 odom = data_to_odometry_msg(
-                    data, ros_time, self.frame_id_gnss_param.value
+                    data, ros_time, self.frame_id_gnss_velocity_param.value,
+                    self.gnss_speed_variance_param.value,
+                    self.gnss_zero_velocity_variance_param.value,
                 )
                 if odom is not None:
                     self.odometry_publisher.publish(odom)
