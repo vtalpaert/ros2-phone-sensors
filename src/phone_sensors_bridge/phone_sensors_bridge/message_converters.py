@@ -12,8 +12,16 @@ from nav_msgs.msg import Odometry
 
 
 def millisec_to_sec_nanosec(ms):
-    # Typical input {'date_ms': 1732380161698}
+    # Typical input: loc.timestamp from the Geolocation API, in integer milliseconds
     _floating_sec = float(ms) / 1000
+    sec = int(_floating_sec)
+    nanosec = int((_floating_sec - sec) * 1e9)
+    return sec, nanosec
+
+
+def microsec_to_sec_nanosec(us):
+    # Typical input: date_us from the browser Performance API (integer microseconds)
+    _floating_sec = float(us) / 1_000_000
     sec = int(_floating_sec)
     nanosec = int((_floating_sec - sec) * 1e9)
     return sec, nanosec
@@ -48,8 +56,8 @@ def get_quaternion_from_euler(roll, pitch, yaw):
 
 
 def data_to_time_reference_msg(data, ros_time, source):
-    # Typical input {'date_ms': 1732380161698}
-    sec, nanosec = millisec_to_sec_nanosec(data["date_ms"])
+    # Typical input {'date_us': 1732380161698000}
+    sec, nanosec = microsec_to_sec_nanosec(data["date_us"])
     msg = TimeReference()
     msg.header.stamp = ros_time.to_msg()
     msg.time_ref.sec = sec
@@ -59,7 +67,7 @@ def data_to_time_reference_msg(data, ros_time, source):
 
 
 def data_to_imu_msg(data, ros_time, frame_id, orientation_covariance, angular_velocity_covariance, linear_acceleration_covariance):
-    # Typical input {'date_ms': 1746375486895,
+    # Typical input {'date_us': 1746375486895000,
     # 'motion': {'ax': 0.44434577226638794, 'ay': -0.5894360542297363, 'az': 2.010622024536133,
     # 'rb': 13.755000114440918, 'rg': 20.96500015258789, 'ra': -55.05500030517578,
     # 'ob': 33.10600160962329, 'og': -5.509307511590301, 'oa': 101.09377997193032,
@@ -74,7 +82,7 @@ def data_to_imu_msg(data, ros_time, frame_id, orientation_covariance, angular_ve
         # Using data["date_ms"] - _motion_interval_ms is possible for precision
         # but it needs to be tested. Indeed there is no guarantee that the refresh
         # rate is equal to the delay
-        sec, nanosec = millisec_to_sec_nanosec(data["date_ms"])
+        sec, nanosec = microsec_to_sec_nanosec(data["date_us"])
         msg.header.stamp.sec = sec
         msg.header.stamp.nanosec = nanosec
     else:
@@ -118,7 +126,7 @@ def data_to_imu_msg(data, ros_time, frame_id, orientation_covariance, angular_ve
 
 
 def data_to_gnss_msgs(data, ros_time, frame_id, source, position_inflation=1.0):
-    # Typical input with low accuracy {'date_ms': 1732386620779,
+    # Typical input with low accuracy {'date_us': 1732386620779000,
     # 'loc': {'coords': {'latitude': 48.88xxxxx, 'longitude': 2.36xxxxx,
     # 'altitude': 95.30000305175781,
     # 'accuracy': 100, 'altitudeAccuracy': 100,
@@ -162,7 +170,7 @@ def data_to_gnss_msgs(data, ros_time, frame_id, source, position_inflation=1.0):
     # Report the time difference between the device time and device GNSS timestamp
     # or the device time to ROS time
     time = TimeReference()
-    sec, nanosec = millisec_to_sec_nanosec(data["date_ms"])
+    sec, nanosec = microsec_to_sec_nanosec(data["date_us"])
     time.header.stamp.sec = sec
     time.header.stamp.nanosec = nanosec
     time.time_ref = fix.header.stamp
@@ -274,11 +282,13 @@ def yaml_to_camera_info(yaml_fname):
 
 
 def binary_to_image_msg(data, ros_time, frame_id, bridge):
-    """Convert binary frame (8-byte date_ms header + JPEG bytes) to ROS Image message"""
+    """Convert binary frame (8-byte date_us header + JPEG bytes) to ROS Image message.
+
+    The header is a little-endian uint64 microseconds since Unix epoch."""
     if len(data) <= 8:
         raise ValueError("Binary frame too short to contain header and image data")
 
-    date_ms = struct.unpack_from('<Q', data, 0)[0]
+    date_us = struct.unpack_from('<Q', data, 0)[0]
     jpeg_bytes = data[8:]
 
     nparr = np.frombuffer(jpeg_bytes, np.uint8)
@@ -293,7 +303,7 @@ def binary_to_image_msg(data, ros_time, frame_id, bridge):
     if ros_time:
         img_msg.header.stamp = ros_time
     else:
-        sec, nanosec = millisec_to_sec_nanosec(date_ms)
+        sec, nanosec = microsec_to_sec_nanosec(date_us)
         img_msg.header.stamp.sec = sec
         img_msg.header.stamp.nanosec = nanosec
     img_msg.header.frame_id = frame_id

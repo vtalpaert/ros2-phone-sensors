@@ -19,7 +19,7 @@ function requestGeolocationPermission(logCallback) {
 function registerGeolocationPublisher(socket, window) {
     function success(geolocation) {
         socket.emit("data", {
-            date_ms: Date.now(),
+            date_us: Math.round((performance.timeOrigin + performance.now()) * 1000),
             loc: geolocation.toJSON()
         });
     }

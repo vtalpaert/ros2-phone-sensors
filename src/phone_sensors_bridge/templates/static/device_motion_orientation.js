@@ -68,7 +68,7 @@ function registerDeviceMotionOrientationPublisher(socket, window) {
     function deviceMotionOrientationSendData() {
         if (motion_init && orientation_init) {
             socket.emit("data", {
-                date_ms: Date.now(),
+                date_us: Math.round((performance.timeOrigin + performance.now()) * 1000),
                 motion: {
                     ax: accel_x,
                     ay: accel_y,

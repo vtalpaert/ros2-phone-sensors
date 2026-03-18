@@ -374,10 +374,10 @@ class ServerApp:
 
         @self.socketio.on("latency_ping")
         def handle_latency_ping_event(data):
-            t_server_ms = self.node.get_clock().now().nanoseconds // 1_000_000
+            t_server_us = self.node.get_clock().now().nanoseconds // 1_000
             emit("latency_pong", {
                 "t1": data["t1"],
-                "t_server_ms": t_server_ms,
+                "t_server_us": t_server_us,
             })
 
         @self.socketio.on("usb_rx_data")

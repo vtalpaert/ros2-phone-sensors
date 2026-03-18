@@ -1,6 +1,6 @@
 function registerTimeReferencePublisher(socket) {
     function timeReferenceSendData() {
-        socket.emit("data", {date_ms: Date.now()});
+        socket.emit("data", {date_us: Math.round((performance.timeOrigin + performance.now()) * 1000)});
     };
 
     var timeReferenceLoop = 0;

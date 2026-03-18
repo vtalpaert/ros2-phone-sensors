@@ -86,6 +86,8 @@ latency         = RTT / 2
 clock_offset    = t_server - (t1_client + t2_client) / 2
 ```
 
+Note: browser timestamps use the [Performance API](https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/High_precision_timing) for sub-millisecond resolution, but precision is still [reduced by browsers](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/now#reduced_time_precision) (100 µs floor in Firefox, up to 100 ms with fingerprinting resistance).
+
 Example measurement over a local WiFi network when running two video feeds, IMU and GNSS:
 
 ```txt

@@ -37,7 +37,7 @@ function registerVideoFunctions(socket, videoElement, cameraId) {
                 videoInputCount++;
                 socket.emit("debug", cameraId + " video device found: label='" + deviceInfo.label + "' deviceId=" + deviceInfo.deviceId);
                 socket.emit("data", {
-                    date_ms: Date.now(),
+                    date_us: Math.round((performance.timeOrigin + performance.now()) * 1000),
                     camera_id: cameraId,
                     device_info: deviceInfo.toJSON()
                 });
@@ -156,7 +156,7 @@ function registerVideoFunctions(socket, videoElement, cameraId) {
 
                     // Only send if frame is not empty
                     if (canvas.width > 0 && canvas.height > 0) {
-                        const dateMs = BigInt(Date.now());
+                        const dateMs = BigInt(Math.round((performance.timeOrigin + performance.now()) * 1000));
                         canvas.toBlob((blob) => {
                             blob.arrayBuffer().then(jpegBuffer => {
                                 // Prepend 8-byte little-endian uint64 timestamp header
