@@ -8,14 +8,13 @@ from flask_socketio import SocketIO, emit
 
 import rclpy
 from rclpy.node import Node
-from sensor_msgs.msg import TimeReference, Imu, NavSatFix, Image, CameraInfo
+from sensor_msgs.msg import TimeReference, Imu, NavSatFix, CompressedImage, CameraInfo
 from nav_msgs.msg import Odometry
 from std_msgs.msg import UInt8MultiArray
-import cv_bridge
 
 from .message_converters import (
     data_to_gnss_msgs,
-    binary_to_image_msg,
+    binary_to_compressed_image_msg,
     data_to_imu_msg,
     data_to_odometry_msg,
     data_to_time_reference_msg,
@@ -44,7 +43,6 @@ class ServerNode(Node):
 
     def __init__(self, usb_tx_sender=None):
         super().__init__(package_name + "_node")
-        self.bridge = cv_bridge.CvBridge()
         self.name_param = self.declare_parameter("name", package_name)
         name = self.name_param.value
 
@@ -133,8 +131,8 @@ class ServerNode(Node):
             TimeReference, "time/gnss", 10
         )
         self.odometry_publisher = self.create_publisher(Odometry, "gnss/odometry", 10)
-        self.video_camera1_publisher = self.create_publisher(Image, "camera1/image_raw", 10)
-        self.video_camera2_publisher = self.create_publisher(Image, "camera2/image_raw", 10)
+        self.video_camera1_publisher = self.create_publisher(CompressedImage, "camera1/image_raw/compressed", 10)
+        self.video_camera2_publisher = self.create_publisher(CompressedImage, "camera2/image_raw/compressed", 10)
         self.usb_rx_publisher = self.create_publisher(UInt8MultiArray, "usb/rx", 10)
         if usb_tx_sender is not None:
             self.usb_tx_subscriber = self.create_subscription(
@@ -213,7 +211,7 @@ class ServerNode(Node):
                 if self.use_ros_time_param.value
                 else False
             )
-            img_msg = binary_to_image_msg(data, ros_time, frame_id, self.bridge)
+            img_msg = binary_to_compressed_image_msg(data, ros_time, frame_id)
             publisher.publish(img_msg)
             if camera_info_msg and camera_info_publisher:
                 camera_info_msg.header.stamp = img_msg.header.stamp

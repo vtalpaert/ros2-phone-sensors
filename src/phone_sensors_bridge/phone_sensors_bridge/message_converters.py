@@ -1,13 +1,11 @@
 import math
 import struct
 import yaml
-import numpy as np
-import cv2
 
 from sensor_msgs.msg import TimeReference
 from sensor_msgs.msg import Imu
 from sensor_msgs.msg import NavSatFix, NavSatStatus
-from sensor_msgs.msg import CameraInfo
+from sensor_msgs.msg import CameraInfo, CompressedImage
 from nav_msgs.msg import Odometry
 
 
@@ -40,18 +38,18 @@ def get_quaternion_from_euler(roll, pitch, yaw):
     Output
         :return qx, qy, qz, qw: The orientation in quaternion [x,y,z,w] format
     """
-    qx = np.sin(roll / 2) * np.cos(pitch / 2) * np.cos(yaw / 2) - np.cos(
+    qx = math.sin(roll / 2) * math.cos(pitch / 2) * math.cos(yaw / 2) - math.cos(
         roll / 2
-    ) * np.sin(pitch / 2) * np.sin(yaw / 2)
-    qy = np.cos(roll / 2) * np.sin(pitch / 2) * np.cos(yaw / 2) + np.sin(
+    ) * math.sin(pitch / 2) * math.sin(yaw / 2)
+    qy = math.cos(roll / 2) * math.sin(pitch / 2) * math.cos(yaw / 2) + math.sin(
         roll / 2
-    ) * np.cos(pitch / 2) * np.sin(yaw / 2)
-    qz = np.cos(roll / 2) * np.cos(pitch / 2) * np.sin(yaw / 2) - np.sin(
+    ) * math.cos(pitch / 2) * math.sin(yaw / 2)
+    qz = math.cos(roll / 2) * math.cos(pitch / 2) * math.sin(yaw / 2) - math.sin(
         roll / 2
-    ) * np.sin(pitch / 2) * np.cos(yaw / 2)
-    qw = np.cos(roll / 2) * np.cos(pitch / 2) * np.cos(yaw / 2) + np.sin(
+    ) * math.sin(pitch / 2) * math.cos(yaw / 2)
+    qw = math.cos(roll / 2) * math.cos(pitch / 2) * math.cos(yaw / 2) + math.sin(
         roll / 2
-    ) * np.sin(pitch / 2) * np.sin(yaw / 2)
+    ) * math.sin(pitch / 2) * math.sin(yaw / 2)
     return [qx, qy, qz, qw]
 
 
@@ -281,8 +279,8 @@ def yaml_to_camera_info(yaml_fname):
     return msg
 
 
-def binary_to_image_msg(data, ros_time, frame_id, bridge):
-    """Convert binary frame (8-byte date_us header + JPEG bytes) to ROS Image message.
+def binary_to_compressed_image_msg(data, ros_time, frame_id):
+    """Convert binary frame (8-byte date_us header + JPEG bytes) to ROS CompressedImage message.
 
     The header is a little-endian uint64 microseconds since Unix epoch."""
     if len(data) <= 8:
@@ -291,20 +289,17 @@ def binary_to_image_msg(data, ros_time, frame_id, bridge):
     date_us = struct.unpack_from('<Q', data, 0)[0]
     jpeg_bytes = data[8:]
 
-    nparr = np.frombuffer(jpeg_bytes, np.uint8)
-    if nparr.size == 0:
+    if len(jpeg_bytes) == 0:
         raise ValueError("Empty image buffer")
 
-    frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-    if frame is None:
-        raise ValueError("Failed to decode JPEG image")
-
-    img_msg = bridge.cv2_to_imgmsg(frame, encoding="bgr8")
+    msg = CompressedImage()
+    msg.format = "jpeg"
+    msg.data = list(jpeg_bytes)
     if ros_time:
-        img_msg.header.stamp = ros_time
+        msg.header.stamp = ros_time
     else:
         sec, nanosec = microsec_to_sec_nanosec(date_us)
-        img_msg.header.stamp.sec = sec
-        img_msg.header.stamp.nanosec = nanosec
-    img_msg.header.frame_id = frame_id
-    return img_msg
+        msg.header.stamp.sec = sec
+        msg.header.stamp.nanosec = nanosec
+    msg.header.frame_id = frame_id
+    return msg

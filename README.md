@@ -56,8 +56,8 @@ The page will prompt for permissions, then display the chosen camera
 | `imu` | `sensor_msgs/Imu` | Orientation (ENU quaternion), angular velocity and linear acceleration in the device frame |
 | `gnss` | `sensor_msgs/NavSatFix` | GPS fix: latitude, longitude, altitude with horizontal/vertical accuracy covariance |
 | `gnss/odometry` | `nav_msgs/Odometry` | GPS-derived velocity in the ENU frame; pose covariance is 1e9 (fuse twist only) |
-| `camera1/image_raw` | `sensor_msgs/Image` | Camera 1 video stream |
-| `camera2/image_raw` | `sensor_msgs/Image` | Camera 2 video stream |
+| `camera1/image_raw/compressed` | `sensor_msgs/CompressedImage` | Camera 1 JPEG stream |
+| `camera2/image_raw/compressed` | `sensor_msgs/CompressedImage` | Camera 2 JPEG stream |
 | `camera1/camera_info` | `sensor_msgs/CameraInfo` | Camera 1 calibration (only published when `camera1_calibration_file` is set) |
 | `camera2/camera_info` | `sensor_msgs/CameraInfo` | Camera 2 calibration (only published when `camera2_calibration_file` is set) |
 | `usb/rx` | `std_msgs/UInt8MultiArray` | Raw bytes received from the USB device (only active when `usb_enabled` is `True`) |
@@ -157,7 +157,7 @@ ros2 launch phone_sensors_bridge_examples rviz.launch.py
 - [ ] `robot_localization` example with visual-inertial odometry
 - [ ] `robot_localization` example with control feedback replacing speed odometry
 - [ ] Tests for `message_converters.py`
-- [ ] Publish `sensor_msgs/CompressedImage` on `camera1/image_raw/compressed` following the [image_transport](https://wiki.ros.org/image_transport) convention - the JPEG bytes from the browser can be placed directly into `CompressedImage.data`, skipping the current decode → numpy → OpenCV → CvBridge chain entirely. This feature will only work for Kilted and Rolling using `image-transport-py`
+- [x] Publish `sensor_msgs/CompressedImage` on `camera1/image_raw/compressed` following the [image_transport](https://wiki.ros.org/image_transport) convention - the JPEG bytes from the browser are placed directly into `CompressedImage.data`, skipping the decode → numpy → OpenCV → CvBridge chain entirely
 - [x] Switch the video channel to binary WebSocket frames to eliminate the base64 encoding overhead (~33% size reduction); pairs naturally with the `CompressedImage` change
 - [x] WebUSB serial bridge to microcontroller over USB (`usb/rx`, `usb/tx` as `std_msgs/UInt8MultiArray`)
 - [ ] Bluetooth serial support

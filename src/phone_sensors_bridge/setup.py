@@ -22,7 +22,6 @@ setup(
         "flask-socketio",
         "gevent-websocket",
         "numpy",
-        "opencv-python",
     ],
     zip_safe=True,
     maintainer="victor",
