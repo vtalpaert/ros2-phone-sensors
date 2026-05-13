@@ -30,6 +30,7 @@ public:
   static const int IN3 = 5;
   static const int IN4 = 6;
   static const int ENB = 7;
+  static const int BAT = 16;
 
   // PWM limits (8-bit resolution, 0-255)
   static const int PWM_MAX = 250;
@@ -37,6 +38,11 @@ public:
   static const int PWM_DEADBAND = 105;
   // Brake delay in ms when switching direction
   static const int BRAKE_DELAY_MS = 20;
+
+  // Battery sense: V_pin = V_batt * 11/61, so V_batt = V_pin * 61/11
+  static constexpr float BAT_DIVIDER_INV = 61.0f / 11.0f;
+  static constexpr float ADC_VREF = 3.3f;
+  static const int ADC_MAX = 1023;
 
   DifferentialRobot(float kp, float ki);
 
@@ -47,6 +53,7 @@ public:
   float getSpeedB() const { return speedB; }
   bool getForwardA() const { return forwardA; }
   bool getForwardB() const { return forwardB; }
+  float getBatteryVoltage() const;
 
 private:
   PIController piA;

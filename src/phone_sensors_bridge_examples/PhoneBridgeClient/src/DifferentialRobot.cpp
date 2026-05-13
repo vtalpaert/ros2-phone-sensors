@@ -1,4 +1,4 @@
-#include "differential_robot.h"
+#include "DifferentialRobot.h"
 
 int PIController::compute(float target, float measured, float dt_s) {
   float error = target - measured;
@@ -36,6 +36,10 @@ void DifferentialRobot::begin() {
 void DifferentialRobot::setSpeed(float aTicksPerSec, float bTicksPerSec) {
   targetA = aTicksPerSec;
   targetB = bTicksPerSec;
+}
+
+float DifferentialRobot::getBatteryVoltage() const {
+  return analogRead(BAT) * (ADC_VREF / ADC_MAX) * BAT_DIVIDER_INV;
 }
 
 void DifferentialRobot::update(long ticksA, long ticksB, float dt_s) {
