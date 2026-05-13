@@ -14,7 +14,7 @@ setup(
         (os.path.join("share", package_name, "config"), glob("config/*")),
         (os.path.join("share", package_name, "launch"), glob("launch/*.launch*")),
     ],
-    install_requires=["setuptools"],
+    install_requires=["setuptools", "pySerialTransfer"],
     zip_safe=True,
     maintainer="victor",
     maintainer_email="victor.talpaert@gmail.com",
