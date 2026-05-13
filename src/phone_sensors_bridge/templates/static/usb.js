@@ -5,6 +5,7 @@ function registerUSBFunctions(socket) {
     var usbDevice = null;
     var usbEpIn = null;
     var usbEpOut = null;
+    var usbEpInPacketSize = 64;
     var usbReading = false;
 
     // Returns a 4-byte little-endian ArrayBuffer for a baud rate (CP2102 SET_BAUDRATE)
@@ -25,7 +26,10 @@ function registerUSBFunctions(socket) {
         usbReading = true;
         while (usbReading) {
             try {
-                var result = await usbDevice.transferIn(usbEpIn, 64);
+                var result = await usbDevice.transferIn(usbEpIn, usbEpInPacketSize);
+                if (result.status && result.status !== "ok") {
+                    socket.emit("warn", "USB RX status=" + result.status);
+                }
                 if (result.data && result.data.byteLength > 0) {
                     socket.emit("usb_rx_data", result.data.buffer);
                 }
@@ -66,7 +70,10 @@ function registerUSBFunctions(socket) {
 
                 var altCdc = device.configuration.interfaces[1].alternates[0];
                 for (var epCdc of altCdc.endpoints) {
-                    if (epCdc.type === "bulk" && epCdc.direction === "in")  usbEpIn  = epCdc.endpointNumber;
+                    if (epCdc.type === "bulk" && epCdc.direction === "in") {
+                        usbEpIn = epCdc.endpointNumber;
+                        usbEpInPacketSize = epCdc.packetSize;
+                    }
                     if (epCdc.type === "bulk" && epCdc.direction === "out") usbEpOut = epCdc.endpointNumber;
                 }
 
@@ -93,7 +100,10 @@ function registerUSBFunctions(socket) {
 
                 var altCp2 = device.configuration.interfaces[0].alternates[0];
                 for (var epCp2 of altCp2.endpoints) {
-                    if (epCp2.type === "bulk" && epCp2.direction === "in")  usbEpIn  = epCp2.endpointNumber;
+                    if (epCp2.type === "bulk" && epCp2.direction === "in") {
+                        usbEpIn = epCp2.endpointNumber;
+                        usbEpInPacketSize = epCp2.packetSize;
+                    }
                     if (epCp2.type === "bulk" && epCp2.direction === "out") usbEpOut = epCp2.endpointNumber;
                 }
 
@@ -103,7 +113,7 @@ function registerUSBFunctions(socket) {
                 return;
             }
 
-            socket.emit("info", "USB opened: type=" + usbDeviceType + " baud=" + usbBaud + " epIn=" + usbEpIn + " epOut=" + usbEpOut);
+            socket.emit("info", "USB opened: type=" + usbDeviceType + " baud=" + usbBaud + " epIn=" + usbEpIn + " (pkt=" + usbEpInPacketSize + ") epOut=" + usbEpOut);
             usbReadLoop();
         } catch (e) {
             socket.emit("error", "USB open error: " + e.toString());

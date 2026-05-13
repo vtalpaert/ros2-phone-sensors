@@ -13,8 +13,8 @@ This repository is inspired by a project I did with students as a TA called [pho
 ## Build
 
 ```bash
-source /opt/ros/humble/setup.bash
-rosdep install -i --from-path src --rosdistro humble -y --ignore-src
+source /opt/ros/<your-distro>/setup.bash
+rosdep install -i --from-path src -y --ignore-src
 colcon build --packages-up-to phone_sensors_bridge
 # Or build for development, but remember to clean and rebuild every time the JS files are changed
 # colcon build --symlink-install  --packages-up-to phone_sensors_bridge_examples --event-handlers console_direct+
@@ -139,6 +139,10 @@ ros2 launch phone_sensors_bridge_examples rviz.launch.py
 
 ![RVIZ example](docs/rviz_example.png)
 
+### Arduino robot
+
+Close the control loop with a microcontroller connected to the phone over USB. The `PhoneBridgeClient` Arduino library and the `cmd_vel_to_arduino` node exchange `geometry_msgs/TwistStamped` commands, wheel odometry, and battery voltage over the WebUSB transport. See [docs/arduino_robot.md](docs/arduino_robot.md) for hardware notes, the bundled sketches (CmdVel, CalibrateOdometry, PIDTune), and the `arduino_bridge.launch.py` entry point.
+
 ## Features
 
 - Browser-based, no app required. Works with Firefox and Chrome on Android
@@ -148,6 +152,7 @@ ros2 launch phone_sensors_bridge_examples rviz.launch.py
 - Time synchronization between ROS, device and GNSS clocks via [TimeReference](https://docs.ros2.org/foxy/api/sensor_msgs/msg/TimeReference.html)
 - Fully configurable via ROS2 parameters; launch file examples included
 - WebUSB serial bridge: forward raw bytes between ROS2 (`usb/rx`, `usb/tx`) and a USB-connected microcontroller; supports CDC-ACM boards (Teensy, Arduino Leonardo/Micro/Zero) and CP2102 USB-UART converters; disabled by default (`usb_enabled:=False`)
+- `PhoneBridgeClient` Arduino library (in `phone_sensors_bridge_examples`) with SerialTransfer-framed sketches for `cmd_vel` / odometry / battery exchange, encoder-based odometry calibration, and PID tuning via the Serial Plotter
 
 ## Roadmap
 
