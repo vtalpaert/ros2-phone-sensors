@@ -2,17 +2,20 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>phone_sensors_bridge</name>
-  <version>0.0.0</version>
-  <description>Serve a webpage to open from a mobile device. The phone's browser will send video, imu and gps data back to the node</description>
+  <version>0.1.0</version>
+  <description>Turn a phone's GPS, IMU and cameras into ROS2 sensors via a browser-served WebSocket bridge, with an optional WebUSB relay to a USB microcontroller.</description>
   <maintainer email="victor.talpaert@gmail.com">victor</maintainer>
   <license>Apache-2.0</license>
+  <url type="repository">https://github.com/vtalpaert/ros2-phone-sensors</url>
 
+  <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>std_msgs</depend>
   <depend>cv_bridge</depend>
   <depend>python3-numpy</depend>
   <depend>python3-opencv</depend>
+  <depend>python3-yaml</depend>
   <depend>python3-flask-socketio</depend>
   <depend>openssl</depend>
 

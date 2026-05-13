@@ -143,6 +143,12 @@ ros2 launch phone_sensors_bridge_examples rviz.launch.py
 
 Close the control loop with a microcontroller connected to the phone over USB. The `PhoneBridgeClient` Arduino library and the `cmd_vel_to_arduino` node exchange `geometry_msgs/TwistStamped` commands, wheel odometry, and battery voltage over the WebUSB transport. See [docs/arduino_robot.md](docs/arduino_robot.md) for hardware notes, the bundled sketches (CmdVel, CalibrateOdometry, PIDTune), and the `arduino_bridge.launch.py` entry point.
 
+The `cmd_vel_to_arduino` node depends on `pySerialTransfer`, which has no rosdep key. Install it via pip before running this example:
+
+```bash
+pip install pySerialTransfer
+```
+
 ## Features
 
 - Browser-based, no app required. Works with Firefox and Chrome on Android
