@@ -29,11 +29,15 @@ def generate_launch_description():
                     ("gnss/odometry", "phone_sensors_bridge/gps/odometry"),
                 ],
             ),
+            # The link odom -> base_link is not normally fixed.
+            # For visualization purposes, the gps speed will
+            # be aligned with the phone orientation, while the current
+            # implementation puts it in ENU
             Node(
                 package="tf2_ros",
                 executable="static_transform_publisher",
                 name="gnss_tf",
-                arguments=["0", "0", "0", "0", "0", "0", "base_link", "gnss"],
+                arguments=["0", "0", "0", "0", "0", "0", "base_link", "odom"],
             ),
             Node(
                 package="rviz2",

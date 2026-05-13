@@ -117,7 +117,7 @@ def data_to_imu_msg(data, ros_time, frame_id, orientation_covariance, angular_ve
     return msg
 
 
-def data_to_gnss_msgs(data, ros_time, frame_id, source):
+def data_to_gnss_msgs(data, ros_time, frame_id, source, position_inflation=1.0):
     # Typical input with low accuracy {'date_ms': 1732386620779,
     # 'loc': {'coords': {'latitude': 48.88xxxxx, 'longitude': 2.36xxxxx,
     # 'altitude': 95.30000305175781,
@@ -146,20 +146,14 @@ def data_to_gnss_msgs(data, ros_time, frame_id, source):
     # Handle None altitude by defaulting to 0
     altitude = data["loc"]["coords"]["altitude"]
     fix.altitude = float(altitude) if altitude is not None else 0.0
+    accuracy = float(data["loc"]["coords"]["accuracy"])
+    horizontal_var = position_inflation * accuracy ** 2
     altitude_accuracy = data["loc"]["coords"]["altitudeAccuracy"]
-    altitude_accuracy = (
-        float(altitude_accuracy) if altitude_accuracy is not None else 1e9
-    )
+    alt_var = position_inflation * float(altitude_accuracy) ** 2 if altitude_accuracy is not None else 1e9
     fix.position_covariance = (
-        float(data["loc"]["coords"]["accuracy"]),
-        0.0,
-        0.0,
-        0.0,
-        float(data["loc"]["coords"]["accuracy"]),
-        0.0,
-        0.0,
-        0.0,
-        altitude_accuracy,
+        horizontal_var, 0.0, 0.0,
+        0.0, horizontal_var, 0.0,
+        0.0, 0.0, alt_var,
     )
     fix.position_covariance_type = NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN
 
@@ -177,7 +171,7 @@ def data_to_gnss_msgs(data, ros_time, frame_id, source):
     return fix, time
 
 
-def data_to_odometry_msg(data, ros_time, frame_id):
+def data_to_odometry_msg(data, ros_time, child_frame_id, speed_var=0.01, zero_velocity_var=0.001):
     # Publishes GPS-derived velocity (twist only) as nav_msgs/Odometry.
     # frame_id is used for both header.frame_id and child_frame_id (ENU frame).
     # Pose is not populated (covariance = 1e9); robot_localization should fuse twist only.
@@ -205,8 +199,8 @@ def data_to_odometry_msg(data, ros_time, frame_id):
         msg.header.stamp.nanosec = nanosec
     else:
         msg.header.stamp = ros_time
-    msg.header.frame_id = frame_id
-    msg.child_frame_id = frame_id
+    msg.header.frame_id = child_frame_id
+    msg.child_frame_id = child_frame_id
 
     # Pose: not populated, covariance set to 1e9 on all diagonal elements
     _large = 1e9
@@ -224,17 +218,16 @@ def data_to_odometry_msg(data, ros_time, frame_id):
         heading_rad = math.radians(heading)
         vx = speed * math.sin(heading_rad)   # east
         vy = speed * math.cos(heading_rad)   # north
-        _speed_var = 0.01   # (0.1 m/s)^2, nominal GPS speed accuracy
-        twist_cov_vx = _speed_var
-        twist_cov_vy = _speed_var
+        twist_cov_vx = speed_var
+        twist_cov_vy = speed_var
     else:
         # Case 2 or 3
         vx = 0.0
         vy = 0.0
         if speed < 0.05:
             # Case 2: near-zero speed, zero-velocity update
-            twist_cov_vx = 0.001
-            twist_cov_vy = 0.001
+            twist_cov_vx = zero_velocity_var
+            twist_cov_vy = zero_velocity_var
         else:
             # Case 3: direction unknown
             twist_cov_vx = _large
